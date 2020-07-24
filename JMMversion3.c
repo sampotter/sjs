@@ -1,4 +1,4 @@
-// Dial-based Jet Marching Method for solving 
+// Dial-based Jet Marching Method for solving
 // the Eikonal equation in 2D.
 // 8-point nearest neighborhood
 // segments of rays are approximated with quadratic curves
@@ -67,24 +67,24 @@ struct mysol do_update(int ind,int i,int inew,struct myvector xnew,
 				int *iplus,double *par1,double *par2,char *cpar,
 				double *NWTarg,double *NWTres,double *NWTllim,double *NWTulim,double *NWTJac,double *NWTdir,
 				int *N1ptu,int *N2ptu);
-				
 
 
-				
+
+
 //-------- VARIABLES ---------
 char slo_fun = SLOTH;
 char method_template = DIAL;
 char method_update = JMM3;
 //
-// 
+//
 
 //--------------------------------------------
 //---------------------------------------------------------------
 
 void param(int nx,int ny,int nxy,struct myvector *xstart,struct mymesh *mesh,double *slo) {
 	int ind;
-	double XMIN,XMAX,YMIN,YMAX;	
-	
+	double XMIN,XMAX,YMIN,YMAX;
+
 	// set *xstart = {0.0,0.0} and parameters for linear speed functions
 	set_params(slo_fun,xstart);
 	// setup computational domain
@@ -114,13 +114,13 @@ void param(int nx,int ny,int nxy,struct myvector *xstart,struct mymesh *mesh,dou
 		YMAX = 0.5;
 		break;
 	default:
-		printf("Set an appropriate slo_fun\n");  
+		printf("Set an appropriate slo_fun\n");
 		exit(1);
 		break;
-	}	
+	}
 	// setup mesh
-	setup_mesh(nx,ny,nxy,XMIN,XMAX,YMIN,YMAX,mesh);  	
-	
+	setup_mesh(nx,ny,nxy,XMIN,XMAX,YMIN,YMAX,mesh);
+
 	for( ind = 0; ind < nxy; ind++ ) {
 		slo[ind] = slowness(slo_fun,getpoint(ind,mesh));
 	}
@@ -151,7 +151,7 @@ struct binary_tree_handle *dijkstra_init(struct mymesh *mesh,struct myvector *xs
 	ind = get_lower_left_index(xstart,mesh);
 	ibox = (int *)malloc(4*sizeof(int)); //ibox = {imin,imax,jmin,jmax}
 	set_ibox(RAD,ind,ibox,mesh);
- 
+
  	*count = 0; // the binary tree is empty
 	for( i = ibox[0]; i <= ibox[1]; i++ ) {
 		for( j = ibox[2]; j <= ibox[3]; j++ ) {
@@ -165,7 +165,7 @@ struct binary_tree_handle *dijkstra_init(struct mymesh *mesh,struct myvector *xs
     			addtree(ind,count,tree,pos,u);
     		}
     	}
-    } 
+    }
     Btree->count = count;
     Btree->pos = pos;
     Btree->tree = tree;
@@ -188,7 +188,7 @@ int dijkstra_main_body(struct mymesh *mesh,double *slo,
 	// for Newton's solver
 	double *par1,*par2; // # of parameters for nonlinear equation for 1ptu and 2ptu
   	int npar1 = 17, npar2 = 41, ncpar = 3; // # of parameters for nonlinear equation for 1ptu and 2ptu
-    struct mysol sol; 
+    struct mysol sol;
 	double *NWTarg, *NWTres, *NWTllim, *NWTulim, *NWTJac, *NWTdir;
 	char *cpar;
 
@@ -201,15 +201,15 @@ int dijkstra_main_body(struct mymesh *mesh,double *slo,
 	//   6 ----------- 0
 	//          7
 
-// 	shifts for neighbors 0...7	
+// 	shifts for neighbors 0...7
 	iplus = (int *)malloc(8*sizeof(int));
 	set_index_shifts_for_nearest_neighbors(iplus,mesh);
 
 	par1 = (double *)malloc(npar1*sizeof(double));
 	par2 = (double *)malloc(npar2*sizeof(double));
 	cpar = (char *)malloc(ncpar*sizeof(char));
-	
-	
+
+
 	NWTarg = (double *)malloc(3*sizeof(double));
 	NWTres = (double *)malloc(3*sizeof(double));
 	NWTdir = (double *)malloc(3*sizeof(double));
@@ -219,9 +219,9 @@ int dijkstra_main_body(struct mymesh *mesh,double *slo,
 
 	cpar[0] = slo_fun;
 	cpar[2] = method_update; // JMMs
-  	
-	
-	while( *(Btree->count) > 0 ) { // && Nfinal < NFMAX 
+
+
+	while( *(Btree->count) > 0 ) { // && Nfinal < NFMAX
 		inew = (Btree->tree)[1];
 		xnew = getpoint(inew,mesh);
 		status[inew] = VALID;
@@ -230,7 +230,7 @@ int dijkstra_main_body(struct mymesh *mesh,double *slo,
 
 // 			printf("Nfinal = %i, inew = %i (%i,%i), u = %.4e, err = %.4e, gu = (%.4e,%.4e)\n",
 // 					Nfinal,inew,ix,iy,u[inew],u[inew]-exact_solution(slo_fun,xnew,slo[inew]),gu[inew].x,gu[inew].y);
-			
+
 		for( i = 0; i < 8; i++ ) {
 			// take care of the boundaries of the computational domain
 			ch = inmesh_test(inew,i,mesh);
@@ -247,13 +247,13 @@ int dijkstra_main_body(struct mymesh *mesh,double *slo,
 						status[ind] = TRIAL;
 						addtree(ind,Btree->count,Btree->tree,Btree->pos,u);
 					}
-					
+
 				}
-			} // if( ch == 'y' && status[ind] != VALID ) 
-		}	// for( i = 0; i < 8; i++ ) 
-	}	
+			} // if( ch == 'y' && status[ind] != VALID )
+		}	// for( i = 0; i < 8; i++ )
+	}
 	return Nfinal;
-} 
+}
 
 //---------------------------------------------------------------
 
@@ -263,14 +263,14 @@ int dijkstra_main_body(struct mymesh *mesh,double *slo,
 
 struct bucket_sort_handle *dial_init(struct mymesh *mesh,struct myvector *xstart,
 		double *slo,double *u,struct myvector *gu,state_e *status) {
-	int i,j,ind,k; 
+	int i,j,ind,k;
 	int *ibox;
 	struct myvector z;
 	//--- variables for bucket sort ---
 	struct mybucket *bucket;
 	struct backptr_list *list;
 	double gap,maxgap; // update gap = min_{ind}(u[ind] - max(u0,u1)); maxgap = max_{ind}(u[ind] - u)
-	int Nbuckets; 
+	int Nbuckets;
 	//--- variables for boundary conditions for Dial-like solvers
 	int *bdry,bcount;
 	double *blist;
@@ -308,9 +308,9 @@ struct bucket_sort_handle *dial_init(struct mymesh *mesh,struct myvector *xstart
 			}
 			else {
 				status[ind] = VALID;
-			}	
+			}
 		}
-	}	
+	}
 	// find gap and maxgap for bucket sort
 	z = find_gap(mesh,slo,ibox); // in mesh.c
 	gap = z.x;
@@ -322,10 +322,10 @@ struct bucket_sort_handle *dial_init(struct mymesh *mesh,struct myvector *xstart
 	// the number of buckets of chosen one more than necessary to exclude roundoff effects
 	printf("Nbuckets = %i\n",Nbuckets);
 	bucket = (struct mybucket*)malloc(Nbuckets*sizeof(struct mybucket));
-	
+
 	// setup buckets and put some initial number of boundary points to buckets
 	start_filling_buckets(BB,Nbuckets,bucket,list,gap,bdry,blist,bcount);
-	
+
 	return BB;
 }
 
@@ -343,18 +343,18 @@ int dial_main_body(struct mymesh *mesh,double *slo,double *u,struct myvector *gu
 	int empty_count = 0,bucket_count,kbucket = 0;
 	int Nfinal = 0;
 	struct myvector xnew;
-	
+
 	double *par1,*par2; // # of parameters for nonlinear equation for 1ptu and 2ptu
   	int npar1 = 17, npar2 = 41, ncpar = 3; // # of parameters for nonlinear equation for 1ptu and 2ptu
-    struct mysol sol; 
+    struct mysol sol;
 	// for Newton's solver
 	double *NWTarg, *NWTres, *NWTllim, *NWTulim, *NWTJac, *NWTdir;
 	char *cpar;
-	
+
 	// variables for bucket sort
 	struct mybucket *bucket;
 	struct backptr_list *list;
-	double gap; 
+	double gap;
 	int Nbuckets,Nb1; // Nb1 = Nbuckets - 1
 	int ibcurrent; // index of the current bucket
 	//--- variables for boundary conditions for Dial-like solvers
@@ -362,13 +362,13 @@ int dial_main_body(struct mymesh *mesh,double *slo,double *u,struct myvector *gu
 	int *bdry,jbdry,bcount;
 	double *blist;
 	int testcount;
-	
+
 	bucket = BB->bucket;
 	list = BB->list;
 	gap = BB->gap;
 	Nbuckets = BB->Nbuckets;
 	Nb1 = Nbuckets-1;
-	ibcurrent = BB->ibcurrent;	
+	ibcurrent = BB->ibcurrent;
 	bdry = BB->bdry;
 	jbdry = BB->jbdry;
 	blist = BB->blist;
@@ -390,8 +390,8 @@ int dial_main_body(struct mymesh *mesh,double *slo,double *u,struct myvector *gu
 	par1 = (double *)malloc(npar1*sizeof(double));
 	par2 = (double *)malloc(npar2*sizeof(double));
 	cpar = (char *)malloc(ncpar*sizeof(char));
-	
-	
+
+
 	NWTarg = (double *)malloc(3*sizeof(double));
 	NWTres = (double *)malloc(3*sizeof(double));
 	NWTdir = (double *)malloc(3*sizeof(double));
@@ -401,9 +401,9 @@ int dial_main_body(struct mymesh *mesh,double *slo,double *u,struct myvector *gu
 
 
 	cpar[0] = slo_fun;
-	cpar[2] = method_update; 
-	
-	while( empty_count < Nbuckets ) { // && Nfinal < NFMAX 
+	cpar[2] = method_update;
+
+	while( empty_count < Nbuckets ) { // && Nfinal < NFMAX
 		bcurrent = bucket + ibcurrent; // pointer to the current bucket
 		lcurrent = bcurrent -> list;
 		vcurrent = bcurrent -> minval;
@@ -413,17 +413,17 @@ int dial_main_body(struct mymesh *mesh,double *slo,double *u,struct myvector *gu
 		testcount = (bucket + ibcurrent) -> count;
 		(bucket + ibcurrent) -> count = 0;
 		bucket_count = 0;
-		while( lcurrent != NULL) { 
+		while( lcurrent != NULL) {
 			inew = lcurrent -> ind; // index of the new accepted point
 			status[inew] = VALID;
 			xnew = getpoint(inew,mesh);
 			Nfinal++;
-			
-			
+
+
 // 			printf("Nfinal = %i, inew = %i (%i,%i), u = %.4e, err = %.4e, gu = (%.4e,%.4e)\n",
 // 					Nfinal,inew,inew%(mesh->nx),inew/(mesh->nx),u[inew],u[inew]-exact_solution(slo_fun,xnew,slo[inew]),gu[inew].x,gu[inew].y);
 
-			
+
 			// scan the nearest neighborhood for possible updates
 			for( i = 0; i < 8; i++ ) {
 				// take care of the boundaries of the computational domain
@@ -462,11 +462,11 @@ int dial_main_body(struct mymesh *mesh,double *slo,double *u,struct myvector *gu
 				ind = bdry[jbdry];
 				knew = adjust_bucket(ind,u[ind],gap,Nbuckets,bucket,list);
 				jbdry++;
-			}		
-		}		
+			}
+		}
 	} // while( empty_count < Nbucket )
 	return kbucket;
-} 
+}
 
 //---------------------------------------------------------------
 //---------------------------------------------------------------
@@ -483,7 +483,7 @@ struct mysol do_update(int ind,int i,int inew,struct myvector xnew,
 	//    |     |     |
 	//   6 ----------- 0
 	//          7
-	int ix = inew%(mesh->nx),iy = inew/(mesh->nx);      
+	int ix = inew%(mesh->nx),iy = inew/(mesh->nx);
 	// directions of unit vector zhat for one-point update
 	double cosx = (mesh->hx)/(mesh->hxy);
 	double cosy = (mesh->hy)/(mesh->hxy);
@@ -497,7 +497,7 @@ struct mysol do_update(int ind,int i,int inew,struct myvector xnew,
 								  {0.0,-1.0}};
 	double h1ptu[] = {(mesh->hxy),(mesh->hx),(mesh->hxy),(mesh->hy),(mesh->hxy),(mesh->hx),(mesh->hxy),(mesh->hy)}; // h for one-point update
 	char ch1ptu;
-	struct mysol sol,update_sol; 
+	struct mysol sol,update_sol;
 	int ind0,ind1,j;
 	struct myvector xhat,x0,x1,xm,dx;
 	struct myvector gtemp;
@@ -522,22 +522,22 @@ struct mysol do_update(int ind,int i,int inew,struct myvector xnew,
 			ind1 = ind + iplus[ut.j1]; // hxy distance from xhat
 			if( status[ind0] == status[ind1]) { // we know that one of these points is inew
 			// do 2-pt-update if both of them are VALID
-				(*N2ptu)++;									
+				(*N2ptu)++;
 				x0 = getpoint(ind0,mesh);
 				x1 = getpoint(ind1,mesh);
-				dx = vec_difference(x1,x0);	
+				dx = vec_difference(x1,x0);
 				if( dot_product(vec_difference(xhat,x1),getperp_plus(dx)) > 0 ) {
-					getperp = getperp_minus;	
+					getperp = getperp_minus;
 					cpar[1] = 'm';
 				}
 				else {
 					getperp = getperp_plus;
 					cpar[1] = 'p';
-				}								
-				
+				}
+
 				sol = two_pt_update(NWTarg,NWTres,NWTllim,NWTulim,NWTJac,NWTdir,
 							dx,x0,xhat,u[ind0],u[ind1],
-								gu[ind0],gu[ind1],slo[ind],par2,cpar);	
+								gu[ind0],gu[ind1],slo[ind],par2,cpar);
 				if( sol.ch == 'y' && sol.u < utemp && sol.u < u[ind] ){
 					utemp = sol.u;
 					gtemp = sol.gu;
@@ -565,7 +565,7 @@ struct mysol do_update(int ind,int i,int inew,struct myvector xnew,
 			update_sol.ch = 'y';
 					update_sol.gap = sol.gap;
 		}
-		(*N1ptu)++;						
+		(*N1ptu)++;
 	}
 	return update_sol;
 }
@@ -579,7 +579,7 @@ struct mysol do_update(int ind,int i,int inew,struct myvector xnew,
 int main() {
     int p, pmin = 4, pmax = 10; // mesh sizes along single dimension run from 2^pmin + 1 to 2^pmax + 1
 	int nx,ny,nxy; // mesh size
-    int i,j,k,ind,kg; 
+    int i,j,k,ind,kg;
     double dd,errmax = 0.0,erms = 0.0;
     double gg,gerrmax = 0.0,germs = 0.0;
     double urms,umax;
@@ -603,24 +603,29 @@ int main() {
 	state_e *status; // status of the mesh point: 1 = finalized, 0 = not finalized
 	struct myvector *xstart;
 	int *N1ptu,*N2ptu;
-	
+
 	struct mymesh *mesh;
-	
+
 	//--- variables for heap sort
 	struct binary_tree_handle *Btree;
 	struct bucket_sort_handle *BB;
-	
+
 	xstart = (struct myvector *)malloc(sizeof(struct myvector));
 	mesh = (struct mymesh *)malloc(sizeof(struct mymesh));
 	N1ptu = (int *)malloc(sizeof(ind));
 	N2ptu = (int *)malloc(sizeof(int));
-			
+
 	// for least squares fit
 	AtA.a11 = 0.0; AtA.a12 = 0.0; AtA.a21 = 0.0;AtA.a22 = 0.0;
 	for( k = 0; k < 4; k++ ) {
-		Atb[k].x = 0.0; 
+		Atb[k].x = 0.0;
 		Atb[k].y = 0.0;
-	}	
+	}
+
+    if (mkdir("Data", 0777)) {
+      perror("ERROR");
+      exit(EXIT_FAILURE);
+    }
 
 	sprintf(fname,"Data/%s%s_ibox_slo%c.txt",str1[(int)method_update-1],str2[(int)method_template],slo_fun);
 	fg = fopen(fname,"w");
@@ -628,7 +633,7 @@ int main() {
 		printf("Cannot open file %d %s\n",errno,fname);
 		exit(1);
 	}
-		
+
 	for( p = pmin; p <= pmax; p++ ) {
 		nx = pow(2,p) + 1;
 		ny = nx;
@@ -663,10 +668,10 @@ int main() {
 			default:
 				printf("method_template = %c while must be 0 (DIAL), or 1 (DIJKSTRA)\n",method_template);
 				exit(1);
-				break;	
+				break;
 		}
 		cpu = (clock()-CPUbegin)/((double)CLOCKS_PER_SEC);
-		printf("CPU time = %g seconds\n",cpu);  
+		printf("CPU time = %g seconds\n",cpu);
 		ind = 0;
 		kg = 0;
 		if( print_errors == 'y' ) {
@@ -683,21 +688,21 @@ int main() {
 			  erms += dd*dd;
 			  gg = norm(vec_difference(gu[ind],exact_gradient(slo_fun,z,slo[ind])));
 			  if( isfinite(gg) ) {
-			  	gerrmax = max(gg,gerrmax);			  
+			  	gerrmax = max(gg,gerrmax);
 			  	germs += gg*gg;
 			  	kg++;
-			  }	
+			  }
 			  if( print_errors == 'y' ) {
 			  	  fprintf(ferr,"%.4e\t",u[ind] - exact_solution(slo_fun,z,slo[ind]));
 			  }
 		  }
 		  if( print_errors == 'y' ) {
 		  	  fprintf(ferr,"\n");
-		  }	  
+		  }
 		}
 		if( print_errors == 'y' ) {
 			fclose(ferr);
-		}	
+		}
 		urms = sqrt(urms/nxy);
 		erms = sqrt(erms/nxy);
 		germs = sqrt(germs/kg);
@@ -708,7 +713,7 @@ int main() {
 				  (mesh->nx),(mesh->ny),errmax,erms,errmax/umax,erms/urms,gerrmax,germs,cpu);
 		printf("%i\t %.4e\t %.4e\t %.4e\t%.4e\t%g\n",
 				  (mesh->nx),errmax,erms,errmax/umax,erms/urms,cpu);
-		printf("N1ptu per point = %.4e, N2ptu per point = %.4e\n",a1ptu,a2ptu);			
+		printf("N1ptu per point = %.4e, N2ptu per point = %.4e\n",a1ptu,a2ptu);
 		fprintf(fg,"%i\t %.4e\t %.4e\t %.4e\t%.4e\t%.4e\t%.4e\t%g\t%.3f\t%.3f\n",
 				  (mesh->nx),errmax,erms,errmax/umax,erms/urms,gerrmax,germs,cpu,a1ptu,a2ptu);
 		// free memory
@@ -727,7 +732,7 @@ int main() {
 				free(Btree);
 				break;
 			default:
-				break;	
+				break;
 	  	}
 		// for least squares fit for errors
 		  aux = -log((mesh->nx1));
@@ -738,18 +743,18 @@ int main() {
 		  AtA.a11 += aux*aux;
 		  AtA.a12 += aux;
 		  AtA.a22 += 1.0;
-		  Atb[0].x += aux*aux0;		
+		  Atb[0].x += aux*aux0;
 		  Atb[0].y += aux0;
-		  Atb[1].x += aux*aux1;		
+		  Atb[1].x += aux*aux1;
 		  Atb[1].y += aux1;
-		  Atb[2].x += aux*aux2;		
+		  Atb[2].x += aux*aux2;
 		  Atb[2].y += aux2;
-		  Atb[3].x += aux*aux3;		
+		  Atb[3].x += aux*aux3;
 		  Atb[3].y += aux3;
-		
+
 	 }
 	 fclose(fg);
-   
+
 	AtA.a21 = AtA.a12;
 	if( pmax - pmin > 0 ) {
 		printf("\nSTATS:\n");
@@ -761,4 +766,3 @@ int main() {
     return 0;
 
 }
-
