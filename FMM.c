@@ -38,18 +38,17 @@ struct mysol {
   double u;
   struct myvector g;
   char ch;
-};  
+};
 
 
 
-int main(void);
 void param(void);
 void ibox(void);
 void ipoint(void);
 void marcher(void);
-double one_pt_update(int ind,int ind0);			   
+double one_pt_update(int ind,int ind0);
 void addtree(int ind); /* adds a node to the binary tree
-                                 of the "considered" points */ 
+                                 of the "considered" points */
 void updatetree(int ind); /* updates the binary tree */
 void deltree(void); /* deletes the root of the binary tree */
 int get_lower_left_index(struct myvector z);
@@ -92,7 +91,7 @@ void param() {
 	int ind;
 	struct myvector z;
 
-	set_params(slo_fun,xstart);	
+	set_params(slo_fun,xstart);
 	switch( slo_fun ) {
 	  case '1': case 'm':
 		XMIN = -1.0;
@@ -119,10 +118,10 @@ void param() {
 		YMAX = 0.5;
 		break;
 	default:
-		printf("Set an appropriate slo_fun\n");  
+		printf("Set an appropriate slo_fun\n");
 		exit(1);
 		break;
-	}	  	
+	}
 	hx = (XMAX - XMIN)/nx1;
 	hy = (YMAX - YMIN)/ny1;
 	hx2 = hx*hx;
@@ -134,12 +133,12 @@ void param() {
     si = hy/hxy;
     ang_x = asin(co);
     ang_y = asin(si);
-	
+
 	for( ind = 0; ind < nxy; ind++ ) {
 		z = getpoint(ind);
 		slo[ind] = slowness(slo_fun,z);
 		if( slo_fun == '1' ||  slo_fun == 'v' || slo_fun == 'm' || slo_fun == 'p' || slo_fun == 'g' ) {
-			uexact[ind] = exact_solution(slo_fun,z,slo[ind]);	
+			uexact[ind] = exact_solution(slo_fun,z,slo[ind]);
 		}
 	}
 	// gap for the bucket sort
@@ -160,18 +159,17 @@ void ibox() {
     // initialize the point source
 	ind0 = get_lower_left_index(*xstart);
 	count = 0; // the binary tree is empty
-	// initialize the nearest neighbors of the point source  
+	// initialize the nearest neighbors of the point source
     i0 = floor(((xstart->x) - XMIN)/hx);
     j0 = floor(((xstart->y) - YMIN)/hy);
-    printf("(%i,%i)\n",i0,j0);
-    
+
     KX = round(RAD/hx);
     KY = round(RAD/hy);
     imin = max(0,i0 - KX);
     imax = min(nx1,i0 + KX);
     jmin = max(0,j0 - KY);
     jmax = min(ny1,j0 + KY);
-    
+
 	for( i = imin; i <= imax; i++ ) {
 		for( j = jmin; j <= jmax; j++ ) {
     		ind = i + nx*j;
@@ -184,8 +182,8 @@ void ibox() {
     			addtree(ind);
     		}
     	}
-    } 
-    
+    }
+
 }
 
 
@@ -195,10 +193,10 @@ void ibox() {
 void marcher(void) {
   int m,m1,ind,ind0,ind1,i0,j0,p0,p1;
   double utemp;
-  struct mysol sol; 
+  struct mysol sol;
   char ch,ch1,ch_swap,ch_tree,ch_1ptu;
   struct myvector x0,xhat,dx;
-  
+
   int NAC = 0;
   while( count > 0 ) {
   	NAC++;
@@ -208,7 +206,7 @@ void marcher(void) {
     /* x and y of the newly accepted point */
     status[ind0] = 2;
     deltree();
-    
+
     /* Inspect the neighbors of the new Accepted point */
     for( m = 0; m < 4; m++ ) {
     	ch = 'y';
@@ -221,14 +219,14 @@ void marcher(void) {
     		if( status[ind] < 2 ) { // ind is not accepted
     			ch_1ptu = 'y';
     			ch_tree = 'n';
-    			// check if we can do two-pt-update    			
+    			// check if we can do two-pt-update
     			for( m1 = 0; m1 < 2; m1++ ) {
     				ch1 = 'y';
 					if( m == 0 || m == 2 ) {
 						ch1 = 'y';
 						ch_swap = 'n';
 						if( m1 == 0 && j0 == ny1 ) ch1 = 'n';
-						else if( m1 == 1 && j0 == 0 ) ch1 = 'n'; 					
+						else if( m1 == 1 && j0 == 0 ) ch1 = 'n';
 						if( ch1 == 'y' ) {
 							ind1 = ( m1 == 0 ) ? ind + nx : ind - nx;
 							if( status[ind1] < 2 ) ch1 = 'n';
@@ -238,11 +236,11 @@ void marcher(void) {
 						ch_swap = 'y';
 						ch1 = 'y';
 						if( m1 == 0 && i0 == nx1 ) ch1 = 'n';
-						else if( m1 == 1 && i0 == 0 ) ch1 = 'n'; 					
+						else if( m1 == 1 && i0 == 0 ) ch1 = 'n';
 						if( ch1 == 'y' ) {
 							ind1 = ( m1 == 0 ) ? ind + 1 : ind - 1;
 							if( status[ind1] < 2 ) ch1 = 'n';
-						}					
+						}
 					}
 					// ch_swap == 'n' ==> ind0 and ind lie on the same horizontal mesh line
 					// ch_swap == 'y' ==> ind1 and ind lie on the same horizontal mesh line
@@ -259,7 +257,7 @@ void marcher(void) {
 						x0 = getpoint(p0);
 						dx = vec_difference(getpoint(p1),x0); // dx = x1 - x0
 						xhat = getpoint(ind);
-						sol = two_pt_update(x0,dx,xhat,u[p0],u[p1],slo[ind]);	
+						sol = two_pt_update(x0,dx,xhat,u[p0],u[p1],slo[ind]);
 						if( sol.ch == 'y' ) {
 							ch_1ptu = 'n';
 							if( sol.u < u[ind] ) {
@@ -268,9 +266,9 @@ void marcher(void) {
 								ch_tree = 'y';
 								// correct signs of gu components depending on quadrant
 							}
-						}					
+						}
 					}
-    			} // end for( m1 = 0; m1 < 2; m1++ ) 
+    			} // end for( m1 = 0; m1 < 2; m1++ )
     			if( ch_1ptu == 'y' ) {
     				// do one-pt-update
     				utemp = (m == 0 || m == 2) ? u[ind0] + hx*slo[ind] :  u[ind0] + hy*slo[ind];
@@ -279,7 +277,7 @@ void marcher(void) {
     					gu[ind] = get_grad_u_1ptu(m,slo[ind]);
     					ch_tree = 'y';
     				}
-    			}    		
+    			}
 				if( ch_tree == 'y' ) {
 					if( status[ind] == 0 ) {
 						addtree(ind);
@@ -295,12 +293,12 @@ void marcher(void) {
 
 
 
-  
+
 /*********************************************/
-  
+
 struct myvector getpoint(int ind) {
   struct myvector l;
-  
+
   l.x = hx*(ind%nx) + XMIN;
   l.y = hy*(ind/nx) + YMIN;
   return l;
@@ -332,19 +330,19 @@ struct myvector find_dir01( int idiff ) {
 //--------------
 void fix_signs( int idiff,struct myvector *g ) {
 // direction x1 - x0
-// 	if( idiff == -nxm1 ) { // dir x1 - x0 is SE, dir x - x_{\lambda} is NE: 
+// 	if( idiff == -nxm1 ) { // dir x1 - x0 is SE, dir x - x_{\lambda} is NE:
 // 		do nothing
 // 	}
-// 	else 
+// 	else
 	if( idiff == nxp1 ) { // dir x1 - x0 is NE, dir x - x_{\lambda} is SE
-		g -> y = -(g -> y);	
+		g -> y = -(g -> y);
 	}
 	else if( idiff == nxm1 ) { // dir x1 - x0 is NW, dir x - x_{\lambda} is SW
-		g -> x = -(g -> x);	
-		g -> y = -(g -> y);	
+		g -> x = -(g -> x);
+		g -> y = -(g -> y);
 	}
 	else if( idiff == -nxp1 ) { // dir x1 - x0 is SW, dir x - x_{\lambda} is NW
-		g -> x = -(g -> x);	
+		g -> x = -(g -> x);
 	}
 }
 
@@ -353,7 +351,7 @@ void fix_signs( int idiff,struct myvector *g ) {
 //--------------
 struct myvector get_grad_u_1ptu(int m, double s ) {
     struct myvector v = {0.0,0.0};
-    
+
     switch(m) {
     	case 0:
     		v.x = s;
@@ -382,7 +380,7 @@ struct myvector get_grad_u_1ptu(int m, double s ) {
 struct mysol two_pt_update(struct myvector x0,struct myvector dx,struct myvector xhat,double u0,double u1,double s) {
 	struct mysol sol;
 	double lam,theta,cos_theta,lhxy,l,du = u1 - u0;
-	
+
 	// find cos(theta), theta = angle(x-x_{lambda},x1-x0)
 	// solve du = s*(x - x_{lambda})^\top(x1 - x0)/l_{lambda} = s*hxy*cos(theta)
 	cos_theta = du/(s*hxy);
@@ -402,7 +400,7 @@ struct mysol two_pt_update(struct myvector x0,struct myvector dx,struct myvector
 //**************************************************
 int get_lower_left_index(struct myvector z) {
 	int i,j,ind;
-	
+
 	i = floor((z.x - XMIN)/hx);
 	j = floor((z.y - YMIN)/hy);
 	ind = i + nx*j;
@@ -417,7 +415,6 @@ void addtree(int ind) {
   int indp, indc;
   char ch;
 
-//  printf("addtree(%i.%i)\n",ind%nx,ind/nx);
   count++;
   tree[count]=ind;
   pos[ind]=count;
@@ -440,7 +437,7 @@ void addtree(int ind) {
       }
       else ch='n';
     }
-  }  
+  }
 }
 
 /*------------------------------------------------------------------*/
@@ -448,8 +445,6 @@ void addtree(int ind) {
 void updatetree(int ind) {
   int loc, lcc;
   double g0,g1,g2;
-
-//  printf("updatetree(%i.%i)\n",ind%nx,ind/nx);
 
   g0=u[ind];
   loc=pos[ind];
@@ -459,7 +454,7 @@ void updatetree(int ind) {
     loc=loc/2;
     tree[loc]=ind;
     pos[tree[loc]]=loc;
-  }  
+  }
   g1=u[tree[loc*2]];
   g2=u[tree[loc*2+1]];
   lcc=count;
@@ -468,7 +463,7 @@ void updatetree(int ind) {
     tree[loc]=tree[lcc];
     pos[tree[loc]]=loc;
     loc=lcc;
-    tree[loc]=ind; 
+    tree[loc]=ind;
     pos[tree[loc]]=loc;
   }
 }
@@ -480,8 +475,6 @@ void updatetree(int ind) {
 void deltree() {
   int loc, ptemp, ind, lcc, ic, ic1, ic2, mind;
   char chd, ch='n';;
-
-//  printf("deltree(%i.%i)\n",tree[1]%nx,tree[1]/nx);
 
   mind=tree[1];
   pos[tree[1]]=0;
@@ -513,7 +506,7 @@ void deltree() {
     else chd='n';
   }
   else chd='n';
-  while( chd != 'n' ) {    
+  while( chd != 'n' ) {
     ptemp=pos[ind];
     pos[ind]=pos[ic];
     tree[loc]=ic;
@@ -548,11 +541,20 @@ void deltree() {
 }
 
 
-/********************************************************/		    
+/********************************************************/
 /*** main ***/
 
-int main() {
-	int i,j,ind,k,kg,m,imax; 
+int main(int argc, char const *argv[]) {
+  if (argc != 2) {
+    fprintf(stderr, "usage: FMM <output_dir>\n");
+    exit(EXIT_FAILURE);
+  }
+
+  char const *output_path = argv[1];
+
+
+
+	int i,j,ind,k,kg,m,imax;
 	double dd,errmax = 0.0,erms = 0.0;
     double gg,gerrmax = 0.0,germs = 0.0;
 	double urms,umax;
@@ -567,13 +569,19 @@ int main() {
 
 	xstart = (struct myvector *)malloc(sizeof(struct myvector));
 
+    printf("method: FMM\n");
+
 	for( jslo = 0; jslo < 5; jslo++ ) {
 		slo_fun = slochar[jslo];
+        printf("- slo_fun: %c\n", slo_fun);
 
-		sprintf(fname,"Data/FMM_slo%c.txt",slo_fun);
-  
+		sprintf(fname,"%s/FMM_slo%c.csv",output_path,slo_fun);
+
 		fstats = fopen(fname,"w");
 		for( p = 4; p <= 12; p++ ) {
+              printf("  * p = %d\n", p);
+
+
 			nx = pow(2,p) + 1;
 			ny = nx;
 			errmax = 0.0,erms = 0.0;
@@ -586,7 +594,6 @@ int main() {
 			nx1 = nxm1;
 			ny1 = ny - 1;
 			nxy = nx*ny;
-			printf("slo_fun = %c\n",slo_fun);
 
 			param();
 			CPUbegin=clock();
@@ -616,31 +623,24 @@ int main() {
 						 if( dd > errmax ) {
 							 errmax = dd;
 							 imax = ind;
-						 }   
+						 }
 						 erms += dd*dd;
 						 gg = norm(vec_difference(gu[ind],exact_gradient(slo_fun,getpoint(ind),slo[ind])));
 						 if( isfinite(gg) && norm(vec_difference(*xstart,getpoint(ind))) > RAD ) {
-							  gerrmax = max(gg,gerrmax);			  
+							  gerrmax = max(gg,gerrmax);
 							  germs += gg*gg;
 							  kg++;
-						 }	
+						 }
 						 m++;
 					 }
-					 if( print_errors == 'y' )  fprintf(ferr,"%.4e\t",gg);
 				}
-				if( print_errors == 'y' ) fprintf(ferr,"\n");
 			}
-			if( print_errors == 'y' ) fclose(ferr);
 			germs = sqrt(germs/kg);
 
-			printf("slo_fun = %c: # accepted = %i, umax = %.4e,  nx = %i, ny = %i, errmax = %.4e, (imax = %i), erms = %.4e, gerrmax = %.4e, germs = %.4e\n",
-				  slo_fun,m,umax,nx,ny,errmax,imax,sqrt(erms/m),gerrmax,germs);
 			fprintf(fstats,"%i\t%.4e\t%.4e\t%.4e\t%.4e\t%.4e\t%.4e\t%g\n",
 				nx,errmax,sqrt(erms/m),errmax/umax,sqrt(erms/urms),gerrmax,germs,cpu);
-			printf("%i\t%.4e\t%.4e\t%.4e\t%.4e\t%.4e\t%.4e\t%g\n",
-				  nx,errmax,sqrt(erms/m),errmax/umax,sqrt(erms/urms),gerrmax,germs,cpu);
 	  }
 	  fclose(fstats);
   }
   return 0;
-}  
+}

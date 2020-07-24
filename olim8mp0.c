@@ -1,7 +1,7 @@
 // olim8mp0
 
 // Dijkstra-like Ordered Line Integral Method
-// with simplified midpoint rule for solving 
+// with simplified midpoint rule for solving
 // the Eikonal equation in 2D.
 // 8-point nearest neighborhood
 
@@ -40,16 +40,15 @@ struct mysol {
   double u;
   struct myvector g;
   char ch;
-};  
+};
 
 //-------- FUNCTIONS ---------
-int main(void);
 void param(void);
 void ibox(void);
 //
 int main_body(void);
 
-struct myvector getpoint(int ind); 
+struct myvector getpoint(int ind);
 
 int get_lower_left_index(struct myvector z);
 
@@ -58,7 +57,7 @@ struct mysol two_pt_update(struct myvector x0,struct myvector dx,struct myvector
 
 // ----- BINARY TREE
 void addtree(int ind); /* adds a node to the binary tree
-                                 of the "considered" points */ 
+                                 of the "considered" points */
 void updatetree(int ind); /* updates the binary tree */
 void deltree(void); /* deletes the root of the binary tree */
 
@@ -88,7 +87,7 @@ void param() {
 	int ind;
 	struct myvector z;
 
-	set_params(slo_fun,xstart);	
+	set_params(slo_fun,xstart);
 	switch( slo_fun ) {
 	  case '1': case 'm':
 		XMIN = -1.0;
@@ -115,10 +114,10 @@ void param() {
 		YMAX = 0.5;
 		break;
 	default:
-		printf("Set an appropriate slo_fun\n");  
+		printf("Set an appropriate slo_fun\n");
 		exit(1);
 		break;
-	}	  	
+	}
 	hx = (XMAX - XMIN)/nx1;
 	hy = (YMAX - YMIN)/ny1;
 	hx2 = hx*hx;
@@ -128,12 +127,12 @@ void param() {
 	ryx = hy/hx;
 	cosx = hx/hxy;
 	cosy = hy/hxy;
-	
+
 	for( ind = 0; ind < nxy; ind++ ) {
 		z = getpoint(ind);
 		slo[ind] = slowness(slo_fun,z);
 		if( slo_fun == '1' ||  slo_fun == 'v' || slo_fun == 'm' || slo_fun == 'p' || slo_fun == 'g' ) {
-			uexact[ind] = exact_solution(slo_fun,z,slo[ind]);	
+			uexact[ind] = exact_solution(slo_fun,z,slo[ind]);
 		}
 	}
 	// gap for the bucket sort
@@ -154,18 +153,17 @@ void ibox() {
     // initialize the point source
 	ind0 = get_lower_left_index(*xstart);
 	count = 0; // the binary tree is empty
-	// initialize the nearest neighbors of the point source  
+	// initialize the nearest neighbors of the point source
     i0 = floor(((xstart->x) - XMIN)/hx);
     j0 = floor(((xstart->y) - YMIN)/hy);
-    printf("(%i,%i)\n",i0,j0);
-    
+
     KX = round(RAD/hx);
     KY = round(RAD/hy);
     imin = max(0,i0 - KX);
     imax = min(nx1,i0 + KX);
     jmin = max(0,j0 - KY);
     jmax = min(ny1,j0 + KY);
-    
+
 	for( i = imin; i <= imax; i++ ) {
 		for( j = jmin; j <= jmax; j++ ) {
     		ind = i + nx*j;
@@ -178,8 +176,8 @@ void ibox() {
     			addtree(ind);
     		}
     	}
-    } 
-    
+    }
+
 }
 
 
@@ -199,7 +197,7 @@ int main_body() {
 	//    |     |     |
 	//   6 ----------- 0
 	//          7
-	int imap[8] = {4,5,6,7,0,1,2,3}; 
+	int imap[8] = {4,5,6,7,0,1,2,3};
 	// if neighbor j of inew has index inew + iplus[j]
 	// then inew is neighbor imap[j] of j
 	int imap1[8][2] = {{7,1},{0,2},
@@ -207,25 +205,25 @@ int main_body() {
 					   {5,3},{6,4},
 	 				   {5,7},{6,0}};
 	// if inew is j neighbor of ind, then the other neighbors for 2-pt-update are
-	// imap1[j][0] and imap1[j][1] 				   
+	// imap1[j][0] and imap1[j][1]
 	char ch,ch_1ptu,ch_tree;
 	int Nfinal = 0;
 	struct myvector xnew,xhat,x0,x1,xm,dx;
-	
-    struct mysol sol; 
+
+    struct mysol sol;
     // directions of unit vector zhat for one-point update
   	double h1ptu[] = {hxy,hx,hxy,hy,hxy,hx,hxy,hy}; // h for one-point update
-  	
-	while( count > 0 ) { // && Nfinal < NFMAX 
+
+	while( count > 0 ) { // && Nfinal < NFMAX
 		inew = tree[1];
 		xnew = getpoint(inew);
 		ix = inew%nx;
-		iy = inew/nx;    
+		iy = inew/nx;
 		/* x and y of the newly accepted point */
 		status[inew] = 2;
 		deltree();
 		Nfinal++;
-			
+
 		for( i = 0; i < 8; i++ ) {
 			// take care of the boundaries of the computational domain
 			ch = 'y';
@@ -247,7 +245,7 @@ int main_body() {
 					// take care of boundaries of the computational domain
 					// if j0 is even, there will be no problem
 					// if j0 is odd, care should be taken
-					if( j0%2 == 1 ) { 
+					if( j0%2 == 1 ) {
 						if( iy == ny1 && ( j0 == 5 || j0 == 1 ) && j == 1 ) ch = 'n'; // (5,4) and (1,2) are rejected
 						else if( iy == 0 && ( j0 == 5 || j0 == 1 ) && j == 0 ) ch = 'n'; // eliminate (5,6) and (1,0)
 						if( ix == nx1 && ( j0 == 3 || j0 == 7 ) && j == 1 ) ch = 'n'; // eliminate (3,2) and (7,0)
@@ -255,33 +253,33 @@ int main_body() {
 						if( ch == 'y' ) { // swap j0 and j1 so that j0 is at distance hxy from xhat
 							jtemp = j0;
 							j0 = j1;
-							j1 = jtemp;								
+							j1 = jtemp;
 						}
 					}
-					// now j0 is at some corner, and j1 is in the midpoint of 
+					// now j0 is at some corner, and j1 is in the midpoint of
 					// some side of the square depicting 8-pt-neighborhood of ind
 					if( ch == 'y' ) { // perform 2-pt-update
 						ind0 = ind + iplus[j0];
 						ind1 = ind + iplus[j1];
-						
+
 						if( status[ind0] == status[ind1]) { // we know that one of these points is inew
 						// do 2-pt-update if both of them are Accepted, i.e., status == 2
 							N2ptu++;
-							
+
 							x0 = getpoint(ind0);
 							x1 = getpoint(ind1);
 							dx = vec_difference(x1,x0);
 							xm = vec_lin_comb(vec_sum(xhat,x0),dx,0.5,0.25); // 0.5*(xhat + x0 + 0.5*dx)
-																					
+
 							sol = two_pt_update(x0,dx,xhat,u[ind0],u[ind1],slowness(slo_fun,xm),slo[ind]);
-	
+
 							if( sol.ch == 'y' && sol.u < u[ind] ){
 								u[ind] = sol.u;
 								gu[ind] = sol.g;
 								utype[ind] = 2;
 								ch_1ptu = 'n';
 								ch_tree = 'y';
-							}			
+							}
 						}  // end if( status[ind0] == status[ind1])
 					} // end if( ch == 'y' )
 				} // end for( j = 0; j < 2; j++ ) {
@@ -303,17 +301,17 @@ int main_body() {
 					}
 					else updatetree(ind);
 				}
-			} // if( ch == 'y' && status[ind] < 2 ) 
-		}	// for( i = 0; i < 8; i++ ) 
-	}	
+			} // if( ch == 'y' && status[ind] < 2 )
+		}	// for( i = 0; i < 8; i++ )
+	}
 	return Nfinal;
-} 
+}
 
 //---------------------------------------------------------------
 
 struct myvector getpoint(int ind) {
 	struct myvector z;
-	
+
 	z.x = XMIN + hx*(ind%nx);
 	z.y = YMIN + hy*(ind/nx);
 	return z;
@@ -323,7 +321,7 @@ struct myvector getpoint(int ind) {
 
 int get_lower_left_index(struct myvector z) {
 	int i,j,ind;
-	
+
 	i = floor((z.x - XMIN)/hx);
 	j = floor((z.y - YMIN)/hy);
 	ind = i + nx*j;
@@ -340,7 +338,7 @@ struct mysol two_pt_update(struct myvector x0,struct myvector dx,struct myvector
 	struct mysol sol;
 	double h,lam,theta,cos_theta,hlam,du = u1 - u0,al,coa;
 	struct myvector xmlam;
-		
+
 	// find cos(theta), theta = angle(x-x_{lambda},x1-x0)
 	// solve du = s*(x - x_{lambda})^\top(x1 - x0)/l_{lambda} = s*hxy*cos(theta)
 	h = norm(dx);
@@ -365,7 +363,7 @@ struct mysol two_pt_update(struct myvector x0,struct myvector dx,struct myvector
 
 double polyval(char ch,double x) {
 	double p = 0.0;
-	
+
 	switch(ch) {
 		case 0: // f(x) = 1 - 3x^2 + 2x^3
 			p = 1.0 + x*x*(2.0*x - 3.0);
@@ -376,18 +374,18 @@ double polyval(char ch,double x) {
 		case 2: // g(x) = x(1 - x)^2;
 			p = 1.0 - x;
 			p *= x*p;
-			break;	
+			break;
 		case 3: // g'(x) = 1 - 4x + 3x^2;
-			p = 1.0 + x*(3.0*x - 4.0);	
+			p = 1.0 + x*(3.0*x - 4.0);
 			break;
 		case 4: // f'' = 12x - 6
 			p = 12.0*x - 6.0;
 			break;
 		case 5: // g'' = -4 + 6x
 			p = -4.0 + 6.0*x;
-					
-		default:		
-			break;					
+
+		default:
+			break;
 	}
 	return p;
 }
@@ -401,7 +399,6 @@ void addtree(int ind) {
   int indp, indc;
   char ch;
 
-//  printf("addtree(%li.%li)\n",ind%NX,ind/NX);
   count++;
   tree[count]=ind;
   pos[ind]=count;
@@ -424,7 +421,7 @@ void addtree(int ind) {
       }
       else ch='n';
     }
-  }  
+  }
 }
 
 /*------------------------------------------------------------------*/
@@ -433,7 +430,6 @@ void updatetree(int ind) {
   int loc, lcc;
   double g0,g1,g2;
 
-//  printf("updatetree(%li.%li)\n",ind%NX,ind/NX);
 
   g0=u[ind];
   loc=pos[ind];
@@ -443,7 +439,7 @@ void updatetree(int ind) {
     loc=loc/2;
     tree[loc]=ind;
     pos[tree[loc]]=loc;
-  }  
+  }
   g1=u[tree[loc*2]];
   g2=u[tree[loc*2+1]];
   lcc=count;
@@ -452,7 +448,7 @@ void updatetree(int ind) {
     tree[loc]=tree[lcc];
     pos[tree[loc]]=loc;
     loc=lcc;
-    tree[loc]=ind; 
+    tree[loc]=ind;
     pos[tree[loc]]=loc;
   }
 }
@@ -464,7 +460,6 @@ void deltree() {
   int loc, ptemp, ind, lcc, ic, ic1, ic2, mind;
   char chd, ch='n';;
 
-//  printf("deltree(%li.%li)\n",tree[1]%NX,tree[1]/NX);
 
   mind=tree[1];
   pos[tree[1]]=0;
@@ -496,7 +491,7 @@ void deltree() {
     else chd='n';
   }
   else chd='n';
-  while( chd != 'n' ) {    
+  while( chd != 'n' ) {
     ptemp=pos[ind];
     pos[ind]=pos[ic];
     tree[loc]=ic;
@@ -535,8 +530,15 @@ void deltree() {
 
 //---------------------------------------------------------------
 
-int main() {
-    int i,j,k,ind,kg; 
+int main(int argc, char const *argv[]) {
+  if (argc != 2) {
+    fprintf(stderr, "usage: olim8mp0 <output_dir>\n");
+    exit(EXIT_FAILURE);
+  }
+
+  char const *output_path = argv[1];
+
+    int i,j,k,ind,kg;
     double dd,errmax = 0.0,erms = 0.0;
     double gg,gerrmax = 0.0,germs = 0.0;
     double urms,umax;
@@ -555,19 +557,25 @@ int main() {
 
 	xstart = (struct myvector *)malloc(sizeof(struct myvector));
 
+    printf("method: olim8mp0\n");
+
 	for( jslo = 0; jslo < 5; jslo++ ) {
 		slo_fun = slochar[jslo];
+        printf("- slo_fun: %c\n", slo_fun);
+
 		// for least squares fit
 		AtA.a11 = 0.0; AtA.a12 = 0.0; AtA.a21 = 0.0;AtA.a22 = 0.0;
 		Atb.x = 0.0; Atb.y = 0.0;
 		Atb1.x = 0.0; Atb1.y = 0.0;
 		Atb2.x = 0.0; Atb2.y = 0.0;
 
-		sprintf(fname,"Data/olim8mp0_slo%c.txt",slo_fun);
+		sprintf(fname,"%s/olim8mp0_slo%c.csv",output_path,slo_fun);
 		fg = fopen(fname,"w");
-	
-	
+
+
 		for( p = pmin; p <= pmax; p++ ) {
+              printf("  * p = %d\n", p);
+
 			nx = pow(2,p) + 1;
 			ny = nx;
 			nx1 = nx - 1;
@@ -583,11 +591,9 @@ int main() {
 			N1ptu = 0;
 			param();
 			ibox();
-			printf("slo_fun = %c\n",slo_fun);
 			CPUbegin=clock();
 			k = main_body();
 			cpu = (clock()-CPUbegin)/((double)CLOCKS_PER_SEC);
-			printf("CPU time  = %g\n",cpu);  
 			ind=0;
 			k = 0;
 			kg = 0;
@@ -600,69 +606,45 @@ int main() {
 				  ind = i + nx*j;
 				  umax = max(u[ind],umax);
 				  urms += u[ind]*u[ind];
-				  dd = fabs(u[ind] - uexact[ind]);			  
+				  dd = fabs(u[ind] - uexact[ind]);
 				  errmax = max(errmax,dd);
 				  erms += dd*dd;
 				  gg = norm(vec_difference(gu[ind],exact_gradient(slo_fun,getpoint(ind),slo[ind])));
 				  if( isfinite(gg) ) {
-					gerrmax = max(gg,gerrmax);			  
+					gerrmax = max(gg,gerrmax);
 					germs += gg*gg;
 					kg++;
-				  }	
-				  k++;
-				  if( print_errors == 'y' ) {
-					  fprintf(ferr,"%.4e\t",u[ind] - uexact[ind]);
-					  fprintf(ftype,"%i\t",utype[ind]);
 				  }
+				  k++;
 			  }
-			  if( print_errors == 'y' ) {
-				  fprintf(ferr,"\n");
-				  fprintf(ftype,"\n");
-			  }	  
 			}
-			if( print_errors == 'y' ) {
-				fclose(ferr);
-				fclose(ftype);
-			}	
 			urms = sqrt(urms/k);
 			erms = sqrt(erms/k);
 			germs = sqrt(germs/kg);
 			a1ptu = (double)N1ptu/k;
 			a2ptu = (double)N2ptu/k;
-			printf("umax = %.4e, urms = %.4e\n",umax,urms);
-			printf("NX = %i, NY = %i, errmax = %.4e, erms = %.4e, n_errmax = %.4e, n_erms = %.4e, gerrmax = %.4e\tgerms = %.4e\tCPU time = %g\n",
-					  nx,ny,errmax,erms,errmax/umax,erms/urms,gerrmax,germs,cpu);
-			printf("%i\t %.4e\t %.4e\t %.4e\t%.4e\t%g\n",
-					  nx,errmax,erms,errmax/umax,erms/urms,cpu);
-			printf("N1ptu per point = %.4e, N2ptu per point = %.4e\n",a1ptu,a2ptu);			
 			fprintf(fg,"%i\t %.4e\t %.4e\t %.4e\t%.4e\t%.4e\t%.4e\t%g\t%.3f\t%.3f\n",
 					  nx,errmax,erms,errmax/umax,erms/urms,gerrmax,germs,cpu,a1ptu,a2ptu);
-				
-	  
+
+
 			// for least squares fit for errors
 			  aux = -log(nx1);
 			  aux1 = log(erms);
 			  AtA.a11 += aux*aux;
 			  AtA.a12 += aux;
 			  AtA.a22 += 1.0;
-			  Atb.x += aux*aux1;		
+			  Atb.x += aux*aux1;
 			  Atb.y += aux1;
 
-	  
-		
+
+
 		 }
 		 fclose(fg);
-   
+
 		AtA.a21 = AtA.a12;
-  
+
 		pc = solve_Axisb(AtA,Atb);
-		printf("ERMS = Ch^p: p = %.4e, C = %.4e\n",pc.x,exp(pc.y));
 	}
     return 0;
 
 }
-
-
-
-
-

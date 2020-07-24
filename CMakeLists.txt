@@ -8,8 +8,6 @@ project (_jmm)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -Wall -Wextra -Werror")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -Werror")
 
-find_package (pybind11)
-
 set (JMM_SRCS
   bicubic.c
   cubic.c
@@ -32,20 +30,9 @@ if (IPO_SUPPORTED)
   set_property (TARGET jmm PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif ()
 
-if (pybind11_FOUND)
-  pybind11_add_module (_jmm MODULE jmm.cpp)
-  target_link_libraries (_jmm PRIVATE jmm)
-  target_compile_definitions (_jmm PRIVATE USING_PYBIND11=1)
-  set_property (TARGET _jmm PROPERTY CXX_STANDARD 17)
-endif ()
-
-add_executable (scratch scratch.cpp)
-target_link_libraries (scratch PRIVATE jmm)
-
 # Masha's library
 
 set (MASHA_LIB_SRCS
-  JMMversion3.c
   mesh.c
   BucketSort.c
   HeapSort.c
@@ -56,7 +43,17 @@ set (MASHA_LIB_SRCS
   Newton.c
   )
 
-add_executable (JMMversion3 ${MASHA_LIB_SRCS})
+add_executable (JMMmeasurements JMMmeasurements.c ${MASHA_LIB_SRCS})
 if (IPO_SUPPORTED)
-  set_property (TARGET JMMversion3 PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+  set_property (TARGET JMMmeasurements PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif ()
+
+add_executable (olim8mp0 olim8mp0.c linear_algebra.c slowness_and_uexact.c)
+if (IPO_SUPPORTED)
+  set_property (TARGET olim8mp0 PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif ()
+
+add_executable (FMM FMM.c linear_algebra.c slowness_and_uexact.c)
+if (IPO_SUPPORTED)
+  set_property (TARGET FMM PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif ()

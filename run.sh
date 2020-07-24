@@ -1,13 +1,20 @@
 #!/usr/bin/env sh
 
+BUILD_DIR=./build
 OUTPUT_DIR=./data
+PLOTS_DIR=./plots
+
+mkdir -p $BUILD_DIR
+cd $BUILD_DIR
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+cd ..
 
 mkdir -p $OUTPUT_DIR
+$BUILD_DIR/JMMmeasurements $OUTPUT_DIR
+$BUILD_DIR/olim8mp0 $OUTPUT_DIR
+$BUILD_DIR/FMM $OUTPUT_DIR
 
-for p in `seq 7 12`; do
-    N=$((2**$p + 1))
-    echo "N = 2^$p + 1 = $N"
-    mkdir -p $OUTPUT_DIR/N$N
-    ./scratch $N
-    mv {T,Tx,Ty,Txy}.npy $OUTPUT_DIR/N$N
-done
+mkdir -p $PLOTS_DIR
+./make_plots.py
+./make_tables.py > $PLOTS_DIR/table.tex

@@ -9,10 +9,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <math.h>
 #include <time.h>
 #include <errno.h>
+
 #include "Newton.h"
 #include "linear_algebra.h"
 #include "slowness_and_uexact.h"
@@ -45,45 +47,16 @@
 #define TOL 1.0e-14
 #define RAD 0.1 // the initial box is [-RAD,RAD]^2
 
+struct mysol
+do_update(
+  int ind,int i,int inew,struct myvector xnew,
+  mesh_s *mesh,double *slo,double *u,struct myvector *gu,state_e *status,
+  int *iplus,double *par1,double *par2,char *cpar,
+  double *NWTarg,double *NWTres,double *NWTllim,double *NWTulim,double *NWTJac,
+  double *NWTdir, int *N1ptu,int *N2ptu);
 
-//-------- FUNCTIONS ---------
-int main(void);
-void param(int nx,int ny,int nxy,struct myvector *xstart,mesh_s *mesh,double *slo);
-struct bucket_sort_handle *dial_init(mesh_s *mesh,struct myvector *xstart,double *slo,
-		double *u,struct myvector *gu,state_e *status);
-struct binary_tree_handle  *dijkstra_init(mesh_s *mesh,struct myvector *xstart,
-		double *slo,double *u,struct myvector *gu,state_e *status);
-//
-int dial_main_body(mesh_s *mesh,double *slo,double *u,struct myvector *gu,state_e *status,
-		struct bucket_sort_handle *BB,int *N1ptu,int *N2ptu);
-int dijkstra_main_body(mesh_s *mesh,double *slo,double *u,struct myvector *gu,state_e *status,
-		struct binary_tree_handle *Btree,int *N1ptu,int *N2ptu);
-
-
-//---- U P D A T E S
-struct mysol do_update(int ind,int i,int inew,struct myvector xnew,
-				mesh_s *mesh,double *slo,double *u,struct myvector *gu,state_e *status,
-				int *iplus,double *par1,double *par2,char *cpar,
-				double *NWTarg,double *NWTres,double *NWTllim,double *NWTulim,double *NWTJac,double *NWTdir,
-				int *N1ptu,int *N2ptu);
-
-
-
-
-//-------- VARIABLES ---------
-char slo_fun = SINEFUN;
-char method_template = DIAL;
-char method_update = JMM1;
-//
-//
-
-
-int IND = 111;
-
-//--------------------------------------------
-//---------------------------------------------------------------
-
-void param(int nx,int ny,int nxy,struct myvector *xstart,mesh_s *mesh,double *slo) {
+void param(int nx,int ny,int nxy,struct myvector *xstart,mesh_s *mesh,double *slo,
+           char slo_fun) {
 	int ind;
 	double XMIN,XMAX,YMIN,YMAX;
 
@@ -130,8 +103,11 @@ void param(int nx,int ny,int nxy,struct myvector *xstart,mesh_s *mesh,double *sl
 
 /************************************/
 
-struct binary_tree_handle *dijkstra_init(mesh_s *mesh,struct myvector *xstart,
-		double *slo,double *u,struct myvector *gu,state_e *status) {
+struct binary_tree_handle *
+dijkstra_init(mesh_s *mesh,struct myvector *xstart,
+              double *slo,double *u,struct myvector *gu,state_e *status,
+              char slo_fun)
+{
 	int i,j,ind;
 	int *ibox;
 	struct myvector z;
@@ -179,9 +155,12 @@ struct binary_tree_handle *dijkstra_init(mesh_s *mesh,struct myvector *xstart,
 //---------------------------------------------------------------
 //--- DIJKSTRA-LIKE HERMITE MARCHER
 
-int dijkstra_main_body(mesh_s *mesh,double *slo,
-		double *u,struct myvector *gu,state_e *status,struct binary_tree_handle *Btree,
-		int *N1ptu,int *N2ptu) {
+int
+dijkstra_main_body(
+  mesh_s *mesh,double *slo,
+  double *u,struct myvector *gu,state_e *status,struct binary_tree_handle *Btree,
+  int *N1ptu,int *N2ptu, char slo_fun, char method_update)
+{
 	int *iplus;
 	int Nfinal = 0;
 	struct myvector xnew;
@@ -263,8 +242,11 @@ int dijkstra_main_body(mesh_s *mesh,double *slo,
 
 //---------------------------------------------------------------
 
-struct bucket_sort_handle *dial_init(mesh_s *mesh,struct myvector *xstart,
-		double *slo,double *u,struct myvector *gu,state_e *status) {
+struct bucket_sort_handle *
+dial_init(mesh_s *mesh,struct myvector *xstart,
+          double *slo,double *u,struct myvector *gu,state_e *status,
+          char slo_fun)
+{
 	int i,j,ind,k;
 	int *ibox;
 	struct myvector z;
@@ -336,8 +318,11 @@ struct bucket_sort_handle *dial_init(mesh_s *mesh,struct myvector *xstart,
 //---------------------------------------------------------------
 //--- DIAL-BASED HERMITE MARCHER
 
-int dial_main_body(mesh_s *mesh,double *slo,double *u,struct myvector *gu,
-		state_e *status,struct bucket_sort_handle *BB,int *N1ptu,int *N2ptu) {
+int dial_main_body(
+  mesh_s *mesh,double *slo,double *u,struct myvector *gu,
+  state_e *status,struct bucket_sort_handle *BB,int *N1ptu,int *N2ptu,
+  char slo_fun, char method_update)
+{
 	bucket_s *bcurrent;
 	struct backptr_list *lcurrent; //,*lnew;
 	double vcurrent;
@@ -425,11 +410,6 @@ int dial_main_body(mesh_s *mesh,double *slo,double *u,struct myvector *gu,
 			xnew = getpoint(inew,mesh);
 			Nfinal++;
 
-// 			if( inew == IND  || inew == 35350) {
-// 				printf("Nfinal = %i, inew = %i (%i,%i), u = %.4e, err = %.4e, gu = (%.4e,%.4e)\n",
-// 						Nfinal,inew,inew%(mesh->nx),inew/(mesh->nx),u[inew],u[inew]-exact_solution(slo_fun,xnew,slo[inew]),gu[inew].x,gu[inew].y);
-// 				}
-
 			printf("Nfinal = %i, inew = %i (%i,%i), u = %.4e, err = %.4e, gu = (%.4e,%.4e)\n",
 					Nfinal,inew,inew%(mesh->nx),inew/(mesh->nx),u[inew],u[inew]-exact_solution(slo_fun,xnew,slo[inew]),gu[inew].x,gu[inew].y);
 
@@ -442,10 +422,6 @@ int dial_main_body(mesh_s *mesh,double *slo,double *u,struct myvector *gu,
 				if( ch == 'y' && status[ind] != VALID ) {
 					sol = do_update(ind,i,inew,xnew,mesh,slo,u,gu,status,iplus,par1,par2,cpar,
 							NWTarg,NWTres,NWTllim,NWTulim,NWTJac,NWTdir,N1ptu,N2ptu);
-
-					if( ind == IND ) {
-						printf("inew = %i, unew = %.4e, ind = %i, sol.u = %.4e, sol.ch = %c\n",inew,u[inew],ind,sol.u,sol.ch);
-					}
 
 					// if the value is reduced, do adjustments
 					if( sol.ch  == 'y' ) {
@@ -556,11 +532,6 @@ struct mysol do_update(int ind,int i,int inew,struct myvector xnew,
 				sol = two_pt_update(NWTarg,NWTres,NWTllim,NWTulim,NWTJac,NWTdir,
 							dx,x0,xhat,u[ind0],u[ind1],
 								gu[ind0],gu[ind1],slo[ind],par2,cpar);
-					if( ind == IND ) {
-						printf("inew = %i, unew = %.4e, ind0 = %i, u0 = %.4e, ind1 = %i, u1 = %.4e, ind = %i, sol.u = %.4e, sol.ch = %c\n",
-						inew,u[inew],ind0,u[ind0],ind1,u[ind1],ind,sol.u,sol.ch);
-						printf("slo[%i] = %.4e, slo[%i] = %.4e, hx = %.4e, hy = %.4e\n",ind0,slo[ind0],ind1,slo[ind1],mesh->hx,mesh->hy);
-					}
 				if( sol.ch == 'y' && sol.u < utemp && sol.u < u[ind] ){
 					utemp = sol.u;
 					gtemp = sol.gu;
@@ -599,8 +570,61 @@ struct mysol do_update(int ind,int i,int inew,struct myvector xnew,
 
 //---------------------------------------------------------------
 
-int main() {
-    int p, pmin = 4, pmax = 4; // mesh sizes along single dimension run from 2^pmin + 1 to 2^pmax +	int nx,ny,nxy; // mesh size
+int main(int argc, char const *argv[]) {
+  if (argc != 5) {
+    fprintf(
+      stderr,
+      "usage: JMMversion3 <slo_fun> <method_template> <method_update> <output_dir>\n"
+      "\n"
+      "where:\n"
+      "\n"
+      "  slo_fun = s1, linear_speed_1, linear_speed_2, sinefun, sloth\n"
+      "  method_template = dijkstra, dial\n"
+      "  method_update = jmm1, jmm2, jmm3\n"
+      "\n"
+      "and <output_dir> specifies where to write the results\n");
+    exit(EXIT_FAILURE);
+  }
+
+  char slo_fun, method_template, method_update;
+
+  if (!strcmp(argv[1], "s1")) {
+    slo_fun = S1;
+  } else if (!strcmp(argv[1], "linear_speed_1")) {
+    slo_fun = LINEAR_SPEED_1;
+  } else if (!strcmp(argv[1], "linear_speed_2")) {
+    slo_fun = LINEAR_SPEED_2;
+  } else if (!strcmp(argv[1], "sinefun")) {
+    slo_fun = SINEFUN;
+  } else if (!strcmp(argv[1], "sloth")) {
+    slo_fun = SLOTH;
+  } else {
+    fprintf(stderr, "invalid slowness function \"%s\"\n", argv[1]);
+    exit(EXIT_FAILURE);
+  }
+
+  if (!strcmp(argv[2], "dijkstra")) {
+    method_template = DIJKSTRA;
+  } else if (!strcmp(argv[2], "dial")) {
+    method_template = DIAL;
+  } else {
+    fprintf(stderr, "invalid method template \"%s\"\n", argv[2]);
+    exit(EXIT_FAILURE);
+  }
+
+  if (!strcmp(argv[3], "jmm1")) {
+    method_update = JMM1;
+  } else if (!strcmp(argv[3], "jmm2")) {
+    method_update = JMM2;
+  } else if (!strcmp(argv[3], "jmm3")) {
+    method_update = JMM3;
+  } else {
+    fprintf(stderr, "invalid method update \"%s\"\n", argv[3]);
+    exit(EXIT_FAILURE);
+  }
+
+    int p, pmin = 4, pmax = 4; // mesh sizes along single dimension run from 2^pmin + 1 to 2^pmax +
+    int nx,ny,nxy; // mesh size
     int i,j,k,ind,kg;
     double dd,errmax = 0.0,erms = 0.0;
     double gg,gerrmax = 0.0,germs = 0.0;
@@ -610,15 +634,12 @@ int main() {
     double cpu;
     FILE *fg,*ferr;
     char fname[100];
-    char str1[3][10] = {"JMM1","JMM2","JMM3"};
-    char str2[2][10] = {"dijkstra","dial"};
     double a1ptu,a2ptu;
     char print_errors = 'n';
 
 	double aux,aux0,aux1,aux2,aux3;
 	struct mymatrix AtA;
 	struct myvector Atb[4],pc;
-	char str3[4][20] = {"ErrMax","ERMS","GRADIENT, ERRMAX","GRADIENT, ERMS"};
 
 	double *u,*slo; // u = value function, slo = slowness
 	struct myvector  *gu;
@@ -627,6 +648,10 @@ int main() {
 	int *N1ptu,*N2ptu;
 
 	mesh_s *mesh;
+
+    char const *str1[3] = {"JMM1","JMM2","JMM3"};
+    char const *str2[2] = {"dijkstra","dial"};
+	char const *str3[4] = {"ErrMax","ERMS","GRADIENT, ERRMAX","GRADIENT, ERMS"};
 
 	//--- variables for heap sort
 	struct binary_tree_handle *Btree;
@@ -644,7 +669,14 @@ int main() {
 		Atb[k].y = 0.0;
 	}
 
-	sprintf(fname,"OldData/%s%s_V3_slo%c.txt",str1[(int)method_update-1],str2[(int)method_template],	fg = fopen(fname,"w");
+	sprintf(
+      fname,
+      "OldData/%s%s_V3_slo%c.txt",
+      str1[(int)method_update-1],
+      str2[(int)method_template],
+      slo_fun);
+
+    fg = fopen(fname,"w");
 	if( fg == NULL ) {
 		printf("Cannot open file %d %s\n",errno,fname);
 		exit(1);
@@ -670,16 +702,16 @@ int main() {
 		*N1ptu = 0;
 		// start
 		printf("slo_fun = %c, method_update = %s, method_template = %s\n",slo_fun,str1[(int)method_update-1],str2[(int)method_template]);
-		param(nx,ny,nxy,xstart,mesh,slo);
+		param(nx,ny,nxy,xstart,mesh,slo,slo_fun);
 		CPUbegin=clock();
 		switch( method_template ) {
 			case DIAL:
-				BB = dial_init(mesh,xstart,slo,u,gu,status);
-				k = dial_main_body(mesh,slo,u,gu,status,BB,N1ptu,N2ptu);
+                BB = dial_init(mesh,xstart,slo,u,gu,status,slo_fun);
+                k = dial_main_body(mesh,slo,u,gu,status,BB,N1ptu,N2ptu,slo_fun,method_update);
 				break;
 			case DIJKSTRA:
-				Btree = dijkstra_init(mesh,xstart,slo,u,gu,status);
-				k = dijkstra_main_body(mesh,slo,u,gu,status,Btree,N1ptu,N2ptu);
+              Btree = dijkstra_init(mesh,xstart,slo,u,gu,status,slo_fun);
+              k = dijkstra_main_body(mesh,slo,u,gu,status,Btree,N1ptu,N2ptu,slo_fun,method_update);
 				break;
 			default:
 				printf("method_template = %c while must be 0 (DIAL), or 1 (DIJKSTRA)\n",method_template);
