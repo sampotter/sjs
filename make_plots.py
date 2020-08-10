@@ -100,6 +100,7 @@ if __name__ == '__main__':
             ax.legend(loc='lower left', fontsize=7)
             ax.set_xlabel(r'CPU Time (s)')
 
+        fig.suptitle('Slowness: %s' % SLO_FUN_NAMES[slo_fun], fontsize=8)
         fig.tight_layout()
         fig.savefig(os.path.join(PLOTS_PATH, 'time_vs_errors_%s.pdf' % slo_fun))
         plt.close(fig)

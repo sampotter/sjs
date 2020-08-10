@@ -1,3 +1,26 @@
+* _Making plots for the SISC paper_
+
+This library contains some extra scripts that can be run to build
+everything in this directory, run the different JMMs referenced in
+the SISC paper, collect the results, and create Figures 8.1 and 8.2,
+as well as Table 8.1. To do this, first set up the Python environment
+by running:
+#+BEGIN_SRC sh
+$ pip install -r requirements.txt
+#+END_SRC
+from the root directory of the repository. Next, run:
+#+BEGIN_SRC sh
+$ ./run.sh
+#+END_SRC
+This script will build everything, collect the output, and make the
+plots and tables. The intermediate data collected by the programs
+will be written to files in `./data`, and the plots and tables will
+be written to `./plots`.  
+
+The usual README for this repository follows.
+
+-----
+
 * libjmm
 
   This is a C library implementing a variety of *jet marching methods*

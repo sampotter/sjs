@@ -490,24 +490,30 @@ int main(int argc, char const *argv[]) {
 				free(Btree->tree);
 				free(Btree->count);
 				free(Btree);
-				// for least squares fit for errors
-				  aux = -log((mesh->nx1));
-				  aux0 = log(errmax);
-				  aux1 = log(erms);
-				  aux2 = log(gerrmax);
-				  aux3 = log(germs);
-				  AtA.a11 += aux*aux;
-				  AtA.a12 += aux;
-				  AtA.a22 += 1.0;
-				  Atb[0].x += aux*aux0;
-				  Atb[0].y += aux0;
-				  Atb[1].x += aux*aux1;
-				  Atb[1].y += aux1;
-				  Atb[2].x += aux*aux2;
-				  Atb[2].y += aux2;
-				  Atb[3].x += aux*aux3;
-				  Atb[3].y += aux3;
 
+                // We only compute the least squares fits for problem
+                // sizes up to 1025 x 1025 because of round-off errors
+                if (p > 10) {
+                  continue;
+                }
+
+				// for least squares fit for errors
+                aux = -log((mesh->nx1));
+                aux0 = log(errmax);
+                aux1 = log(erms);
+                aux2 = log(gerrmax);
+                aux3 = log(germs);
+                AtA.a11 += aux*aux;
+                AtA.a12 += aux;
+                AtA.a22 += 1.0;
+                Atb[0].x += aux*aux0;
+                Atb[0].y += aux0;
+                Atb[1].x += aux*aux1;
+                Atb[1].y += aux1;
+                Atb[2].x += aux*aux2;
+                Atb[2].y += aux2;
+                Atb[3].x += aux*aux3;
+                Atb[3].y += aux3;
 			 }
 			 fclose(fg);
 

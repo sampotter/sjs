@@ -1,6 +1,7 @@
+#!/usr/bin/env python
+
 import glob
 import os
-
 
 OUTPUT_PATH = os.path.join('.', 'data')
 SLO_FUN = ['1', 'p', 'v', 'm', 'g']
