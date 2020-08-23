@@ -250,14 +250,14 @@ bool F4_bfgs_step(dvec2 xk, dvec2 gk, dmat22 Hk,
       }
     }
   } else {
-    *xk1 = dvec2_add(xk, dvec2_dbl_mul(pk, t));
+    *xk1 = dvec2_add(xk, dvec2_dbl_mul(pk, t)); // TODO: don't do this if t = 0! no need, just set xk1 = xk
     F4_compute(xk1->x, xk1->y, context);
   }
 
   // Now, compute a new gradient and do the DFP update to update our
   // approximation of the inverse Hessian.
-  *gk1 = F4_get_grad(context);
-  update_dfp(*xk1, xk, *gk1, gk, Hk, Hk1);
+  *gk1 = F4_get_grad(context); // TODO: this is also wasteful when t = 0! see above
+  update_dfp(*xk1, xk, *gk1, gk, Hk, Hk1); // TODO: this, too
 
   if (t < 1 && (fabs(xk1->x) < EPS || fabs(1 - xk1->x) < EPS)) {
     dbl F4_th_th = Hk1->data[0][0]/dmat22_det(Hk1);
