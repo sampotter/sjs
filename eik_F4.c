@@ -186,6 +186,7 @@ static void update_dfp(dvec2 xk1, dvec2 xk, dvec2 gk1, dvec2 gk, dmat22 Hk,
   tmp3 = dvec2_outer(sk, sk);
   tmp2 = dvec2_dot(yk, sk);
   *Hk1 = dmat22_add(*Hk1, dmat22_dbl_div(tmp3, tmp2));
+  perturb_if_indefinite(Hk1);
 }
 
 // static void update_bfgs(dvec2 xk1, dvec2 xk, dvec2 gk1, dvec2 gk, dmat22 Hk,
