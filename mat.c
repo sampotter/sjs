@@ -93,13 +93,12 @@ dbl dmat22_det(dmat22 const *A) {
   return A->data[0][0]*A->data[1][1] - A->data[0][1]*A->data[1][0];
 }
 
-void dmat22_eigvals(dmat22 const *A, dbl *lam1, dbl *lam2) {
+dvec2 dmat22_eigvals(dmat22 const *A) {
   dbl tr = dmat22_trace(A);
   dbl disc = tr*tr - 4*dmat22_det(A);
   assert(disc >= 0);
   dbl tmp = sqrt(disc);
-  *lam1 = (tr + tmp)/2;
-  *lam2 = (tr - tmp)/2;
+  return (dvec2) {(tr + tmp)/2, (tr - tmp)/2};
 }
 
 void dmat22_transpose(dmat22 *A) {

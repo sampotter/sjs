@@ -26,7 +26,7 @@ dmat22 dvec2_outer(dvec2 u, dvec2 v);
 void dmat22_invert(dmat22 *A);
 dbl dmat22_trace(dmat22 const *A);
 dbl dmat22_det(dmat22 const *A);
-void dmat22_eigvals(dmat22 const *A, dbl *lam1, dbl *lam2);
+dvec2 dmat22_eigvals(dmat22 const *A);
 void dmat22_transpose(dmat22 *A);
 
 typedef struct {
