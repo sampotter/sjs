@@ -189,26 +189,32 @@ static void update_dfp(dvec2 xk1, dvec2 xk, dvec2 gk1, dvec2 gk, dmat22 Hk,
   perturb_if_indefinite(Hk1);
 }
 
-// static void update_bfgs(dvec2 xk1, dvec2 xk, dvec2 gk1, dvec2 gk, dmat22 Hk,
-//                         dmat22 *Hk1) {
-//   dvec2 sk = dvec2_sub(xk1, xk);
-//   dvec2 yk = dvec2_sub(gk1, gk);
-//   dbl rhok = 1/dvec2_dot(yk, sk);
+static void update_bfgs(dvec2 xk1, dvec2 xk, dvec2 gk1, dvec2 gk, dmat22 Hk,
+                        dmat22 *Hk1) {
+  if (xk1.x == xk.x && xk1.y == xk.y) {
+    return;
+  }
 
-//   dmat22 tmp = dvec2_outer(sk, yk);
-//   tmp = dmat22_dbl_mul(tmp, -rhok);
-//   tmp.data[0][0] += 1;
-//   tmp.data[1][1] += 1;
+  dvec2 sk = dvec2_sub(xk1, xk);
+  dvec2 yk = dvec2_sub(gk1, gk);
+  dbl rhok = 1/dvec2_dot(yk, sk);
 
-//   *Hk1 = dmat22_mul(tmp, Hk);
-//   dmat22_transpose(&tmp);
-//   *Hk1 = dmat22_mul(*Hk1, tmp);
+  dmat22 tmp = dvec2_outer(sk, yk);
+  tmp = dmat22_dbl_mul(tmp, -rhok);
+  tmp.data[0][0] += 1;
+  tmp.data[1][1] += 1;
 
-//   tmp = dvec2_outer(sk, sk);
-//   tmp = dmat22_dbl_mul(tmp, rhok);
+  *Hk1 = dmat22_mul(tmp, Hk);
+  dmat22_transpose(&tmp);
+  *Hk1 = dmat22_mul(*Hk1, tmp);
 
-//   *Hk1 = dmat22_add(*Hk1, tmp);
-// }
+  tmp = dvec2_outer(sk, sk);
+  tmp = dmat22_dbl_mul(tmp, rhok);
+
+  *Hk1 = dmat22_add(*Hk1, tmp);
+
+  perturb_if_indefinite(Hk1);
+}
 
 bool F4_bfgs_step(dvec2 xk, dvec2 gk, dmat22 Hk,
                   dvec2 *xk1, dvec2 *gk1, dmat22 *Hk1,
