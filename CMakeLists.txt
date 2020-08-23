@@ -48,6 +48,12 @@ if (IPO_SUPPORTED)
   set_property (TARGET JMMmeasurements PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif ()
 
+add_executable (cell_marching cell_marching.c slow.c)
+target_link_libraries (cell_marching PRIVATE jmm)
+if (IPO_SUPPORTED)
+  set_property (TARGET cell_marching PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif ()
+
 add_executable (olim8mp0 olim8mp0.c linear_algebra.c slowness_and_uexact.c)
 if (IPO_SUPPORTED)
   set_property (TARGET olim8mp0 PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
