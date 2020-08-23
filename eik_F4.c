@@ -152,28 +152,23 @@ dmat22 F4_hess_fd(dbl eta, dbl th, dbl eps, F4_context *context) {
   return hess;
 }
 
+// TODO: this is pretty hacky...
+static void perturb_if_indefinite(dmat22 *A) {
+  dvec2 eigvals = dmat22_eigvals(A);
+  assert(eigvals.x > 0);
+  if (eigvals.y < 0) {
+    A->data[0][0] -= 2*eigvals.y;
+    A->data[1][1] -= 2*eigvals.y;
+  }
+}
+
 void F4_bfgs_init(dbl eta, dbl th, dvec2 *x0, dvec2 *g0, dmat22 *H0,
                   F4_context *context) {
   *x0 = (dvec2) {.x = eta, .y = th};
   F4_compute(x0->x, x0->y, context);
   *g0 = F4_get_grad(context);
   *H0 = F4_hess_fd(eta, th, 1e-7, context);
-  /**
-   * If the hessian is indefinite, we want to perturb it by a constant
-   * multiple times the identity so that it it's positive definite. We
-   * assume that the hessian can't be negative definite (hopefully
-   * this can't happen... something really weird would have had to
-   * have happened.
-   */
-  {
-    dbl lam1, lam2;
-    dmat22_eigvals(H0, &lam1, &lam2);
-    assert(lam1 > 0);
-    if (lam2 < 0) {
-      H0->data[0][0] -= 2*lam2;
-      H0->data[1][1] -= 2*lam2;
-    }
-  }
+  perturb_if_indefinite(H0);
   dmat22_invert(H0);
 }
 
