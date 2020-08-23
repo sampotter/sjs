@@ -81,9 +81,19 @@ int main(int argc, char *argv[]) {
   ivec2 shape = {N, N};
   dvec2 xymin = {-1, -1};
   dbl h = 2.0/(N-1);
+
+  if (slo_fun == 'v') {
+    i0 = 0;
+    xymin = (dvec2) {0, 0};
+    h = 1.0/(N-1);
+  }
+
   eik_init(scheme, &slow, shape, xymin, h);
 
   int R = N/20;
+  if (slo_fun == 'v') {
+    R = N/10;
+  }
   if (R < 5) R = 5;
 
   /**
