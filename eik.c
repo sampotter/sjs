@@ -382,19 +382,23 @@ static void tri(eik_s *eik, int l, int l0, int l1, int ic0) {
     dmat22 Hk;
     F4_bfgs_init(eta, th, &xk, &gk, &Hk, &context);
     dbl Tprev = context.F4;
+    T = context.F4;
 
     int iter = 0;
-    while (F4_bfgs_step(xk, gk, Hk, &xk, &gk, &Hk, &context)) {
-      if (xk.x < 0 || xk.x > 1) {
+    while (dvec2_maxnorm(gk) > EPS
+           && F4_bfgs_step(xk, gk, Hk, &xk, &gk, &Hk, &context)) {
+      if (xk.x < -EPS || xk.x > 1 + EPS) {
         printf("out of bounds: eta = %g\n", xk.x);
         abort();
       }
+
+      xk.x = fmax(0, fmin(1, xk.x));
 
       T = context.F4;
 
       ++iter;
 
-      if (fabs(T - Tprev) <= EPS*fabs(fmax(T, Tprev)) + EPS) {
+      if (fabs(T - Tprev) <= 1e1*EPS*(fabs(fmax(T, Tprev)) + 1)) {
         break;
       }
 
@@ -406,6 +410,7 @@ static void tri(eik_s *eik, int l, int l0, int l1, int ic0) {
         printf("exceeded number of iterations\n");
         abort();
       }
+
       if (T > Tprev) {
         printf("no decrease in T: (%g > %g)\n", T, Tprev);
         abort();

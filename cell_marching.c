@@ -21,7 +21,9 @@ int main(int argc, char *argv[]) {
   dbl (*u)(dbl, dbl);
   dbl (*ux)(dbl, dbl);
   dbl (*uy)(dbl, dbl);
+  dbl (*uxx)(dbl, dbl);
   dbl (*uxy)(dbl, dbl);
+  dbl (*uyy)(dbl, dbl);
 
   if (slo_fun == '1') {
     s = s_1;
@@ -29,35 +31,45 @@ int main(int argc, char *argv[]) {
     u = u_1;
     ux = ux_1;
     uy = uy_1;
+    uxx = uxx_1;
     uxy = uxy_1;
+    uyy = uyy_1;
   } else if (slo_fun == 'p') {
     s = s_p;
     grad_s = grad_s_p;
     u = u_p;
     ux = ux_p;
     uy = uy_p;
+    uxx = uxx_p;
     uxy = uxy_p;
+    uyy = uyy_p;
   } else if (slo_fun == 'v') {
     s = s_v;
     grad_s = grad_s_v;
     u = u_v;
     ux = ux_v;
     uy = uy_v;
+    uxx = uxx_v;
     uxy = uxy_v;
-  // } else if (slo_fun == 'm') {
-  //   s = s_m;
-  //   grad_s = grad_s_m;
-  //   u = u_m;
-  //   ux = ux_m;
-  //   uy = uy_m;
-  //   uxy = uxy_m;
-  // } else if (slo_fun == 'g') {
-  //   s = s_g;
-  //   grad_s = grad_s_g;
-  //   u = u_g;
-  //   ux = ux_g;
-  //   uy = uy_g;
-  //   uxy = uxy_g;
+    uyy = uyy_v;
+  } else if (slo_fun == 'm') {
+    s = s_m;
+    grad_s = grad_s_m;
+    u = u_m;
+    ux = ux_m;
+    uy = uy_m;
+    uxx = uxx_m;
+    uxy = uxy_m;
+    uyy = uyy_m;
+  } else if (slo_fun == 'g') {
+    s = s_g;
+    grad_s = grad_s_g;
+    u = u_g;
+    ux = ux_g;
+    uy = uy_g;
+    uxx = uxx_g;
+    uxy = uxy_g;
+    uyy = uyy_g;
   } else {
     fprintf(
       stderr,
@@ -82,17 +94,37 @@ int main(int argc, char *argv[]) {
   dvec2 xymin = {-1, -1};
   dbl h = 2.0/(N-1);
 
+  /**
+   * For the 'v' slowness function, set the domain to be [0, 1] x [0,
+   * 1] with a point source at (0, 0).
+   */
   if (slo_fun == 'v') {
     i0 = 0;
     xymin = (dvec2) {0, 0};
     h = 1.0/(N-1);
   }
 
+  /**
+   * For the 'g' slowness function, set the domain to [0, 1/2] x [0,
+   * 1/2] with a point source at (0, 0).
+   */
+  if (slo_fun == 'g') {
+    i0 = 0;
+    xymin = (dvec2) {0, 0};
+    h = 0.5/(N-1);
+  }
+
   eik_init(scheme, &slow, shape, xymin, h);
 
+  /**
+   * Ensure that the factor radius is at least 0.1 in each domain.
+   */
   int R = N/20;
   if (slo_fun == 'v') {
     R = N/10;
+  }
+  if (slo_fun == 'g') {
+    R = N/5;
   }
   if (R < 5) R = 5;
 
@@ -117,49 +149,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
-  /**
-   * Initialize inside disk.
-   */
-  // for (int i = 0; i < N; ++i) {
-  //   int di = i - i0, di_sq = di*di;
-  //   for (int j = 0; j < N; ++j) {
-  //     int dj = j - i0, dj_sq = dj*dj;
-  //     dbl r = sqrt(di_sq + dj_sq);
-  //     if (r < R) {
-  //       dbl x = h*i + xymin.x;
-  //       dbl y = h*j + xymin.y;
-  //       jet J = {u(x, y), ux(x, y), uy(x, y), uxy(x, y)};
-  //       eik_add_valid(scheme, (ivec2) {i, j}, J);
-  //     }
-  //   }
-  // }
-  // {
-  //   dbl di[4] = {1, 0, -1,  0};
-  //   dbl dj[4] = {0, 1,  0, -1};
-  //   for (int i = 0; i < N; ++i) {
-  //     for (int j = 0; j < N; ++j) {
-  //       ivec2 ind = {i, j};
-  //       if (eik_get_state(scheme, ind) != VALID) {
-  //         continue;
-  //       }
-  //       for (int k = 0; k < 4; ++k) {
-  //         int i_ = i + di[k];
-  //         int j_ = j + dj[k];
-  //         if (0 <= i_ && i_ < N && 0 <= j_ && j_ < N) {
-  //           ivec2 ind_ = {i_, j_};
-  //           state_e state = eik_get_state(scheme, ind_);
-  //           if (state != VALID && state != TRIAL) {
-  //             dbl x = h*i_ + xymin.x;
-  //             dbl y = h*j_ + xymin.y;
-  //             jet J = {u(x, y), ux(x, y), uy(x, y), uxy(x, y)};
-  //             eik_add_trial(scheme, ind_, J);
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
 
   eik_build_cells(scheme);
 
@@ -240,6 +229,25 @@ int main(int argc, char *argv[]) {
   }
   fclose(fp);
 
+  snprintf(path, sizeof(path), "Exx_%d.bin", N);
+  fp = fopen(path, "wb");
+  k = 0;
+  for (int i = 0; i < N; ++i) {
+    dbl x = xymin.x + h*i;
+    for (int j = 0; j < N; ++j) {
+      dbl y = xymin.y + h*j;
+      dbl S = s(x, y, NULL);
+      dbl Sx = grad_s(x, y, NULL).x;
+      dbl Tx = jets[k].fx;
+      dbl Ty = jets[k].fy;
+      dbl Txy = jets[k].fxy;
+      dbl Txx = (S*Sx - Txy*Ty)/Tx;
+      dbl exx = uxx(x, y) - Txx;
+      fwrite(&exx, sizeof(dbl), 1, fp);
+    }
+  }
+  fclose(fp);
+
   snprintf(path, sizeof(path), "Exy_%d.bin", N);
   fp = fopen(path, "wb");
   k = 0;
@@ -249,6 +257,25 @@ int main(int argc, char *argv[]) {
       dbl y = xymin.y + h*j;
       dbl exy = uxy(x, y) - jets[k++].fxy;
       fwrite(&exy, sizeof(dbl), 1, fp);
+    }
+  }
+  fclose(fp);
+
+  snprintf(path, sizeof(path), "Eyy_%d.bin", N);
+  fp = fopen(path, "wb");
+  k = 0;
+  for (int i = 0; i < N; ++i) {
+    dbl x = xymin.x + h*i;
+    for (int j = 0; j < N; ++j) {
+      dbl y = xymin.y + h*j;
+      dbl S = s(x, y, NULL);
+      dbl Sy = grad_s(x, y, NULL).y;
+      dbl Tx = jets[k].fx;
+      dbl Ty = jets[k].fy;
+      dbl Tyx = jets[k].fxy;
+      dbl Tyy = (S*Sy - Tyx*Tx)/Ty;
+      dbl eyy = uyy(x, y) - Tyy;
+      fwrite(&eyy, sizeof(dbl), 1, fp);
     }
   }
   fclose(fp);

@@ -172,26 +172,27 @@ void F4_bfgs_init(dbl eta, dbl th, dvec2 *x0, dvec2 *g0, dmat22 *H0,
   dmat22_invert(H0);
 }
 
-static void update_dfp(dvec2 xk1, dvec2 xk, dvec2 gk1, dvec2 gk, dmat22 Hk,
-                       dmat22 *Hk1) {
-  if (xk1.x == xk.x && xk1.y == xk.y) {
-    return;
-  }
-  dvec2 sk = dvec2_sub(xk1, xk);
-  dvec2 yk = dvec2_sub(gk1, gk);
-  dvec2 tmp1 = dmat22_dvec2_mul(Hk, yk);
-  dbl tmp2 = dvec2_dot(yk, tmp1);
-  dmat22 tmp3 = dvec2_outer(tmp1, tmp1);
-  *Hk1 = dmat22_sub(Hk, dmat22_dbl_div(tmp3, tmp2));
-  tmp3 = dvec2_outer(sk, sk);
-  tmp2 = dvec2_dot(yk, sk);
-  *Hk1 = dmat22_add(*Hk1, dmat22_dbl_div(tmp3, tmp2));
-  perturb_if_indefinite(Hk1);
-}
+//static void update_dfp(dvec2 xk1, dvec2 xk, dvec2 gk1, dvec2 gk, dmat22 Hk,
+//                       dmat22 *Hk1) {
+//  if (xk1.x == xk.x && xk1.y == xk.y) {
+//    return;
+//  }
+//  dvec2 sk = dvec2_sub(xk1, xk);
+//  dvec2 yk = dvec2_sub(gk1, gk);
+//  dvec2 tmp1 = dmat22_dvec2_mul(Hk, yk);
+//  dbl tmp2 = dvec2_dot(yk, tmp1);
+//  dmat22 tmp3 = dvec2_outer(tmp1, tmp1);
+//  *Hk1 = dmat22_sub(Hk, dmat22_dbl_div(tmp3, tmp2));
+//  tmp3 = dvec2_outer(sk, sk);
+//  tmp2 = dvec2_dot(yk, sk);
+//  *Hk1 = dmat22_add(*Hk1, dmat22_dbl_div(tmp3, tmp2));
+//  perturb_if_indefinite(Hk1);
+//}
 
 static void update_bfgs(dvec2 xk1, dvec2 xk, dvec2 gk1, dvec2 gk, dmat22 Hk,
                         dmat22 *Hk1) {
-  if (xk1.x == xk.x && xk1.y == xk.y) {
+  if (dvec2_dist(xk1, xk) < EPS) {
+    *Hk1 = Hk;
     return;
   }
 
@@ -219,6 +220,8 @@ static void update_bfgs(dvec2 xk1, dvec2 xk, dvec2 gk1, dvec2 gk, dmat22 Hk,
 bool F4_bfgs_step(dvec2 xk, dvec2 gk, dmat22 Hk,
                   dvec2 *xk1, dvec2 *gk1, dmat22 *Hk1,
                   F4_context *context) {
+  assert(dvec2_maxnorm(gk) > EPS);
+
   dvec2 pk = dmat22_dvec2_mul(Hk, gk);
   dvec2_negate(&pk);
 
@@ -232,43 +235,66 @@ bool F4_bfgs_step(dvec2 xk, dvec2 gk, dmat22 Hk,
   t /= pk.x;
   t = clamp(t, 0, 1);
 
+//  dbl const c1 = 1e-4;
+  dbl const rho = 0.5;
+
   /**
    * Do an inexact backtracking line search to find `t` such that the
    * sufficient decrease conditions are satisfied.
    */
-  if (t > EPS && pk_dot_gk < -1e-13) {
-    dbl const c1 = 1e-4;
-    dbl const rho = 0.9;
-
+  if (t > EPS && pk_dot_gk < 0) {
     dbl fk = context->F4, fk1;
     while (true) {
       *xk1 = dvec2_add(xk, dvec2_dbl_mul(pk, t));
       F4_compute(xk1->x, xk1->y, context);
       fk1 = context->F4;
-      if (fk1 <= fk + c1*t*pk_dot_gk) {
+      if (fk1 <= fk + EPS) {
         break;
       } else {
         t *= rho;
       }
     }
   } else {
-    *xk1 = dvec2_add(xk, dvec2_dbl_mul(pk, t)); // TODO: don't do this if t = 0! no need, just set xk1 = xk
+    // TODO: don't do this if t = 0! no need, just set xk1 = xk
+    *xk1 = dvec2_add(xk, dvec2_dbl_mul(pk, t));
     F4_compute(xk1->x, xk1->y, context);
   }
 
   // Now, compute a new gradient and do the DFP update to update our
   // approximation of the inverse Hessian.
-  *gk1 = F4_get_grad(context); // TODO: this is also wasteful when t = 0! see above
-  update_dfp(*xk1, xk, *gk1, gk, Hk, Hk1); // TODO: this, too
+  //
+  // TODO: this is also wasteful when t = 0! see above
+  *gk1 = F4_get_grad(context);
+  update_bfgs(*xk1, xk, *gk1, gk, Hk, Hk1);
 
   if (t < 1 && (fabs(xk1->x) < EPS || fabs(1 - xk1->x) < EPS)) {
-    dbl F4_th_th = Hk1->data[0][0]/dmat22_det(Hk1);
-    dbl F4_th = gk1->y;
-    xk1->y -= F4_th/F4_th_th;
+    gk = *gk1;
+    xk = *xk1;
 
-    F4_compute(xk1->x, xk1->y, context);
+    // Reset t to be a line search parameter along `th`
+    t = 1;
+
+    // Reset pk and pk_dot_gk for descent along `th`
+    dbl F4_th_th = Hk1->data[0][0]/dmat22_det(Hk1);
+    dbl F4_th = gk.y;
+    pk.y = -F4_th/F4_th_th;
+    pk_dot_gk = pk.y*gk.y;
+
+    // Backtracking line search
+    dbl fk = context->F4, fk1;
+    while (true) {
+      xk1->y = xk.y + t*pk.y;
+      F4_compute(xk1->x, xk1->y, context);
+      fk1 = context->F4;
+      if (fk1 <= fk + EPS) {
+        break;
+      } else {
+        t *= rho;
+      }
+    }
+
     *gk1 = F4_get_grad(context);
-    update_dfp(*xk1, xk, *gk1, gk, Hk, Hk1);
+    update_bfgs(*xk1, xk, *gk1, gk, Hk, Hk1);
   }
 
   return true;
