@@ -23,7 +23,9 @@ cubic_s bicubic_get_fy_on_edge(bicubic_s const *bicubic, bicubic_variable var, i
 dbl bicubic_f(bicubic_s const *bicubic, dvec2 cc);
 dbl bicubic_fx(bicubic_s const *bicubic, dvec2 cc);
 dbl bicubic_fy(bicubic_s const *bicubic, dvec2 cc);
+dbl bicubic_fxx(bicubic_s const *bicubic, dvec2 cc);
 dbl bicubic_fxy(bicubic_s const *bicubic, dvec2 cc);
+dbl bicubic_fyy(bicubic_s const *bicubic, dvec2 cc);
 dvec4 interpolate_fxy_at_verts(dvec4 fx, dvec4 fy, dbl h);
 bool bicubic_valid(bicubic_s const *bicubic);
 void bicubic_invalidate(bicubic_s *bicubic);

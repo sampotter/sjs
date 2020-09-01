@@ -236,14 +236,10 @@ int main(int argc, char *argv[]) {
     dbl x = xymin.x + h*i;
     for (int j = 0; j < N; ++j) {
       dbl y = xymin.y + h*j;
-      dbl S = s(x, y, NULL);
-      dbl Sx = grad_s(x, y, NULL).x;
-      dbl Tx = jets[k].fx;
-      dbl Ty = jets[k].fy;
-      dbl Txy = jets[k].fxy;
-      dbl Txx = (S*Sx - Txy*Ty)/Tx;
+      dbl Txx = eik_Txx(scheme, (dvec2) {x, y});
       dbl exx = uxx(x, y) - Txx;
       fwrite(&exx, sizeof(dbl), 1, fp);
+      ++k;
     }
   }
   fclose(fp);
@@ -255,7 +251,8 @@ int main(int argc, char *argv[]) {
     dbl x = xymin.x + h*i;
     for (int j = 0; j < N; ++j) {
       dbl y = xymin.y + h*j;
-      dbl exy = uxy(x, y) - jets[k++].fxy;
+      dbl Txy = eik_Txy(scheme, (dvec2) {x, y});
+      dbl exy = uxy(x, y) - Txy;
       fwrite(&exy, sizeof(dbl), 1, fp);
     }
   }
@@ -268,14 +265,10 @@ int main(int argc, char *argv[]) {
     dbl x = xymin.x + h*i;
     for (int j = 0; j < N; ++j) {
       dbl y = xymin.y + h*j;
-      dbl S = s(x, y, NULL);
-      dbl Sy = grad_s(x, y, NULL).y;
-      dbl Tx = jets[k].fx;
-      dbl Ty = jets[k].fy;
-      dbl Tyx = jets[k].fxy;
-      dbl Tyy = (S*Sy - Tyx*Tx)/Ty;
+      dbl Tyy = eik_Tyy(scheme, (dvec2) {x, y});
       dbl eyy = uyy(x, y) - Tyy;
       fwrite(&eyy, sizeof(dbl), 1, fp);
+      ++k;
     }
   }
   fclose(fp);

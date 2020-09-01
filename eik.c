@@ -1014,6 +1014,16 @@ dbl eik_Ty(eik_s *eik, dvec2 xy) {
   return bicubic_fy(bicubic, cc)/eik->h;
 }
 
+dbl eik_Txx(eik_s *eik, dvec2 xy) {
+  dvec2 cc;
+  int lc = xy_to_lc_and_cc(eik->shape, eik->xymin, eik->h, xy, &cc);
+  if (!can_build_cell(eik, lc)) {
+    return NAN;
+  }
+  bicubic_s *bicubic = &eik->bicubics[lc];
+  return bicubic_fxx(bicubic, cc)/(eik->h*eik->h);
+}
+
 dbl eik_Txy(eik_s *eik, dvec2 xy) {
   dvec2 cc;
   int lc = xy_to_lc_and_cc(eik->shape, eik->xymin, eik->h, xy, &cc);
@@ -1022,6 +1032,16 @@ dbl eik_Txy(eik_s *eik, dvec2 xy) {
   }
   bicubic_s *bicubic = &eik->bicubics[lc];
   return bicubic_fxy(bicubic, cc)/(eik->h*eik->h);
+}
+
+dbl eik_Tyy(eik_s *eik, dvec2 xy) {
+  dvec2 cc;
+  int lc = xy_to_lc_and_cc(eik->shape, eik->xymin, eik->h, xy, &cc);
+  if (!can_build_cell(eik, lc)) {
+    return NAN;
+  }
+  bicubic_s *bicubic = &eik->bicubics[lc];
+  return bicubic_fyy(bicubic, cc)/(eik->h*eik->h);
 }
 
 bool eik_can_build_cell(eik_s const *eik, ivec2 indc) {

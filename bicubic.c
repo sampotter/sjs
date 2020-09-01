@@ -100,10 +100,24 @@ dbl bicubic_fy(bicubic_s const *bicubic, dvec2 cc) {
   );
 }
 
+dbl bicubic_fxx(bicubic_s const *bicubic, dvec2 cc) {
+  return dvec4_dot(
+    dvec4_d2m(cc.x),
+    dmat44_dvec4_mul(bicubic->A, dvec4_m(cc.y))
+  );
+}
+
 dbl bicubic_fxy(bicubic_s const *bicubic, dvec2 cc) {
   return dvec4_dot(
     dvec4_dm(cc.x),
     dmat44_dvec4_mul(bicubic->A, dvec4_dm(cc.y))
+  );
+}
+
+dbl bicubic_fyy(bicubic_s const *bicubic, dvec2 cc) {
+  return dvec4_dot(
+    dvec4_m(cc.x),
+    dmat44_dvec4_mul(bicubic->A, dvec4_d2m(cc.y))
   );
 }
 
