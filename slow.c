@@ -320,52 +320,31 @@ dvec2 grad_s_g(dbl x, dbl y, void *context) {
   return (dvec2) {.x = GX/s, .y = GY/s};
 }
 
-dbl S_g(dbl x, dbl y) {
-  return sqrt(G0*G0 + GX*x + GY*y);
-}
-
-dbl Sx_g(dbl x, dbl y) {
-  return GX/(2*S_g(x, y));
-}
-
-dbl Sy_g(dbl x, dbl y) {
-  return GY/(2*S_g(x, y));
-}
-
-dbl Sxx_g(dbl x, dbl y) {
-  dbl Sx = Sx_g(x, y);
-  return -Sx*Sx/S_g(x, y);
-}
-
-dbl Sxy_g(dbl x, dbl y) {
-  return -Sx_g(x, y)*Sy_g(x, y)/S_g(x, y);
-}
-
-dbl Syy_g(dbl x, dbl y) {
-  dbl Sy = Sy_g(x, y);
-  return -Sy*Sy/S_g(x, y);
+// \bar{S}^2 in Fomel's paper
+dbl q_g(dbl x, dbl y) {
+  return G0*G0 + GX*x + GY*y;
 }
 
 dbl T_g(dbl x, dbl y) {
-  dbl S = S_g(x, y);
-  dbl S_sq = S*S;
-  return sqrt(S_sq*S_sq - GNORMSQ*(x*x + y*y));
+  dbl q = q_g(x, y);
+  return sqrt(q*q - GNORMSQ*NORMSQ(x, y));
 }
 
 dbl Tx_g(dbl x, dbl y) {
-  dbl S = S_g(x, y);
-  return (GX*S*S - GNORMSQ*x)/T_g(x, y);
+  dbl q = q_g(x, y);
+  dbl T = T_g(x, y);
+  return (GX*q - GNORMSQ*x)/T;
 }
 
 dbl Ty_g(dbl x, dbl y) {
-  dbl S = S_g(x, y);
-  return (GY*S*S - GNORMSQ*y)/T_g(x, y);
+  dbl q = q_g(x, y);
+  dbl T = T_g(x, y);
+  return (GY*q - GNORMSQ*y)/T;
 }
 
 dbl Txx_g(dbl x, dbl y) {
-  dbl T = T_g(x, y);
   dbl Tx = Tx_g(x, y);
-  return (GX*GX - GNORMSQ - Tx*Tx)/T;
+  return -(GY*GY + Tx*Tx)/T_g(x, y);
 }
 
 dbl Txy_g(dbl x, dbl y) {
@@ -373,118 +352,76 @@ dbl Txy_g(dbl x, dbl y) {
 }
 
 dbl Tyy_g(dbl x, dbl y) {
-  dbl T = T_g(x, y);
   dbl Ty = Ty_g(x, y);
-  return (GY*GY - GNORMSQ - Ty*Ty)/T;
+  return -(GX*GX + Ty*Ty)/T_g(x, y);
 }
 
-dbl sigma_g(dbl x, dbl y) {
-  dbl S = S_g(x, y);
-  dbl T = T_g(x, y);
-  return sqrt(2*(S*S - T))/sqrt(GNORMSQ);
+dbl sig_g(dbl x, dbl y) {
+  return sqrt(2*(q_g(x, y) - T_g(x, y))/GNORMSQ);
 }
 
-dbl sigmax_g(dbl x, dbl y) {
-  dbl sig = sigma_g(x, y);
-  dbl S = S_g(x, y);
-  dbl T = T_g(x, y);
-  dbl Tx = Tx_g(x, y);
-  return (x/sig - sig*(GX + Tx)/2)/(S*S + T);
+dbl sigx_g(dbl x, dbl y) {
+  return (GX - Tx_g(x, y))/(GNORMSQ*sig_g(x, y));
 }
 
-dbl sigmay_g(dbl x, dbl y) {
-  dbl sig = sigma_g(x, y);
-  dbl S = S_g(x, y);
-  dbl T = T_g(x, y);
-  dbl Ty = Ty_g(x, y);
-  return (y/sig - sig*(GY + Ty)/2)/(S*S + T);
+dbl sigy_g(dbl x, dbl y) {
+  return (GY - Ty_g(x, y))/(GNORMSQ*sig_g(x, y));
 }
 
-dbl sigmaxx_g(dbl x, dbl y) {
-  dbl sig = sigma_g(x, y);
-  dbl sigx = sigmax_g(x, y);
-  dbl T = T_g(x, y);
-  dbl Tx = Tx_g(x, y);
-  dbl Txx = Txx_g(x, y);
-  dbl S = S_g(x, y);
-  return -(sigx*sigx/sig + (2*sigx*(GX + Tx) + sig*Txx/2)/(S*S + T));
+dbl sigxx_g(dbl x, dbl y) {
+  dbl sigx = sigx_g(x, y);
+  return -(Txx_g(x, y)/GNORMSQ + sigx*sigx)/sig_g(x, y);
 }
 
-dbl sigmaxy_g(dbl x, dbl y) {
-  dbl sig = sigma_g(x, y);
-  dbl sigx = sigmax_g(x, y);
-  dbl sigy = sigmay_g(x, y);
-  dbl T = T_g(x, y);
-  dbl Tx = Tx_g(x, y);
-  dbl Ty = Ty_g(x, y);
-  dbl Txy = Txy_g(x, y);
-  dbl S = S_g(x, y);
-  return -(sigx*sigy/sig + (sigx*(GY + Ty) + sigy*(GX + Tx) + sig*Txy/2)/(S*S + T));
+dbl sigxy_g(dbl x, dbl y) {
+  return -(Txy_g(x, y)/GNORMSQ + sigx_g(x, y)*sigy_g(x, y))/sig_g(x, y);
 }
 
-dbl sigmayy_g(dbl x, dbl y) {
-  dbl sig = sigma_g(x, y);
-  dbl sigy = sigmay_g(x, y);
-  dbl T = T_g(x, y);
-  dbl Ty = Ty_g(x, y);
-  dbl Tyy = Tyy_g(x, y);
-  dbl S = S_g(x, y);
-  return -(sigy*sigy/sig + (2*sigy*(GY + Ty) + sig*Tyy/2)/(S*S + T));
+dbl sigyy_g(dbl x, dbl y) {
+  dbl sigy = sigy_g(x, y);
+  return -(Tyy_g(x, y)/GNORMSQ + sigy*sigy)/sig_g(x, y);
 }
 
 dbl u_g(dbl x, dbl y) {
-  dbl sig = sigma_g(x, y);
-  dbl S = S_g(x, y);
-  return sig*(S - GNORMSQ*sig*sig)/6;
+  dbl sig = sig_g(x, y);
+  dbl sig_sq = sig*sig;
+  return sig*q_g(x, y)- GNORMSQ*sig*sig_sq/6;
 }
 
 dbl ux_g(dbl x, dbl y) {
-  dbl S = S_g(x, y);
-  dbl Sx = Sx_g(x, y);
-  dbl sig = sigma_g(x, y);
-  dbl sigx = sigmax_g(x, y);
-  return S*sigx + Sx*sig - GNORMSQ*sigx*sig*sig/2;
+  dbl sig = sig_g(x, y);
+  dbl sig_sq = sig*sig;
+  dbl sigx = sigx_g(x, y);
+  return GX*sig + q_g(x, y)*sigx - GNORMSQ*sig_sq*sigx/2;
 }
 
 dbl uy_g(dbl x, dbl y) {
-  dbl S = S_g(x, y);
-  dbl Sy = Sy_g(x, y);
-  dbl sig = sigma_g(x, y);
-  dbl sigy = sigmay_g(x, y);
-  return S*sigy + Sy*sig - GNORMSQ*sigy*sig*sig/2;
+  dbl sig = sig_g(x, y);
+  dbl sig_sq = sig*sig;
+  dbl sigy = sigy_g(x, y);
+  return GY*sig + q_g(x, y)*sigy - GNORMSQ*sig_sq*sigy/2;
 }
 
 dbl uxx_g(dbl x, dbl y) {
-  dbl S = S_g(x, y);
-  dbl Sx = Sx_g(x, y);
-  dbl Sxx = Sxx_g(x, y);
-  dbl sig = sigma_g(x, y);
-  dbl sigx = sigmax_g(x, y);
-  dbl sigxx = sigmaxx_g(x, y);
-  return S*sigxx + 2*Sx*sigx + Sxx*sig - GNORMSQ*(sigxx*sig*sig/2 + sig*sigx);
+  dbl sig = sig_g(x, y);
+  dbl sigx = sigx_g(x, y);
+  dbl sigxx = sigxx_g(x, y);
+  return 2*GX*sigx + q_g(x, y)*sigxx - GNORMSQ*sig*(sigx*sigx + sig*sigxx/2);
 }
 
 dbl uxy_g(dbl x, dbl y) {
-  dbl S = S_g(x, y);
-  dbl Sx = Sx_g(x, y);
-  dbl Sy = Sy_g(x, y);
-  dbl Sxy = Sxy_g(x, y);
-  dbl sig = sigma_g(x, y);
-  dbl sigx = sigmax_g(x, y);
-  dbl sigy = sigmay_g(x, y);
-  dbl sigxy = sigmaxy_g(x, y);
-  return S*sigxy + Sy*sigx + Sx*sigy + Sxy*sig
-    - GNORMSQ*(sigxy*sig*sig + 2*sigx*sigy*sig)/2;
+  dbl sig = sig_g(x, y);
+  dbl sigx = sigx_g(x, y);
+  dbl sigy = sigy_g(x, y);
+  dbl sigxy = sigxy_g(x, y);
+  return GX*sigy + GY*sigx + q_g(x, y)*sigxy - GNORMSQ*sig*(sigx*sigy + sig*sigxy/2);
 }
 
 dbl uyy_g(dbl x, dbl y) {
-  dbl S = S_g(x, y);
-  dbl Sy = Sy_g(x, y);
-  dbl Syy = Syy_g(x, y);
-  dbl sig = sigma_g(x, y);
-  dbl sigy = sigmay_g(x, y);
-  dbl sigyy = sigmayy_g(x, y);
-  return S*sigyy + 2*Sy*sigy + Syy*sig - GNORMSQ*(sigyy*sig*sig/2 + sig*sigy);
+  dbl sig = sig_g(x, y);
+  dbl sigy = sigy_g(x, y);
+  dbl sigyy = sigyy_g(x, y);
+  return 2*GY*sigy + q_g(x, y)*sigyy - GNORMSQ*sig*(sigy*sigy + sig*sigyy/2);
 }
 
 #undef G0
