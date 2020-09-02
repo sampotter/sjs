@@ -79,6 +79,26 @@ bicubic_get_fy_on_edge(bicubic_s const *bicubic, bicubic_variable var, int edge)
   return cubic;
 }
 
+cubic_s
+bicubic_get_fxx_on_edge(bicubic_s const *bicubic, bicubic_variable var, int edge) {
+  dmat44 Axx = dmat44_dmat44_mul(D_tr, bicubic->A);
+  Axx = dmat44_dmat44_mul(D_tr, Axx);
+  cubic_s cubic = {
+    .a = restrict_A(Axx, var, edge)
+  };
+  return cubic;
+}
+
+cubic_s
+bicubic_get_fyy_on_edge(bicubic_s const *bicubic, bicubic_variable var, int edge) {
+  dmat44 Ayy = dmat44_dmat44_mul(bicubic->A, D);
+  Ayy = dmat44_dmat44_mul(Ayy, D);
+  cubic_s cubic = {
+    .a = restrict_A(Ayy, var, edge)
+  };
+  return cubic;
+}
+
 dbl bicubic_f(bicubic_s const *bicubic, dvec2 cc) {
   return dvec4_dot(
     dvec4_m(cc.x),
