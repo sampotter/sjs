@@ -107,6 +107,24 @@ void dmat22_transpose(dmat22 *A) {
   A->data[0][1] = tmp;
 }
 
+#define DET33(x00, x01, x02, x10, x11, x12, x20, x21, x22) (    \
+  x00*(x11*x22 - x21*x12) -                                     \
+  x01*(x10*x22 - x20*x12) +                                     \
+  x02*(x10*x21 - x20*x11))
+
+dvec3 dmat33_dvec3_solve(dmat33 A, dvec3 b) {
+  dbl a00 = A.data[0][0], a01 = A.data[0][1], a02 = A.data[0][2];
+  dbl a10 = A.data[1][0], a11 = A.data[1][1], a12 = A.data[1][2];
+  dbl a20 = A.data[2][0], a21 = A.data[2][1], a22 = A.data[2][2];
+  dbl det = DET33(a00, a01, a02, a10, a11, a12, a20, a21, a22);
+  dbl detx = DET33(b.x, a01, a02, b.y, a11, a12, b.z, a21, a22);
+  dbl dety = DET33(a00, b.x, a02, a10, b.y, a12, a20, b.z, a22);
+  dbl detz = DET33(a00, a01, b.x, a10, a11, b.y, a20, a21, b.z);
+  return (dvec3) {detx/det, dety/det, detz/det};
+}
+
+#undef DET33
+
 dvec4 dmat44_dvec4_mul(dmat44 const A, dvec4 const x) {
   dvec4 y;
   for (int i = 0; i < 4; ++i) {

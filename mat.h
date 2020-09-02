@@ -31,6 +31,15 @@ void dmat22_transpose(dmat22 *A);
 
 typedef struct {
   union {
+    dbl data[3][3];
+    dvec3 rows[3];
+  };
+} dmat33;
+
+dvec3 dmat33_dvec3_solve(dmat33 A, dvec3 b);
+
+typedef struct {
+  union {
     dbl data[4][4];
     dvec4 rows[4];
   };
