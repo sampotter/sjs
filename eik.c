@@ -171,7 +171,7 @@ static int cell_nb_verts_to_nearby_cells[NUM_CELL_NB_VERTS][NUM_NB_CELLS] = {
 #undef _
 
 /**
- * This array gives the offsets ind "indc" space from the linear
+ * This array gives the offsets in "indc" space from the linear
  * index of a grid node to its four neighboring cells.
  */
 static ivec2 nb_cell_offsets[NUM_NB_CELLS] = {
