@@ -9,7 +9,7 @@ extern "C" {
 typedef struct dial3 dial3_s;
 
 void dial3_alloc(dial3_s **dial);
-error_e dial3_init(dial3_s *dial, stype_e stype, int const *shape, dbl h);
+error_e dial3_init(dial3_s *dial, stype_e stype, int const *shape, dbl h, bool direct);
 void dial3_deinit(dial3_s *dial);
 void dial3_dealloc(dial3_s **dial);
 void dial3_add_point_source(dial3_s *dial, int const *ind0, dbl T);

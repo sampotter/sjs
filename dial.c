@@ -61,6 +61,8 @@ struct dial3 {
   ivec3 shape;
   size_t size;
   dbl h;
+  bool direct;
+
   dbl gap;
 
   dbl *Toff;
@@ -68,8 +70,9 @@ struct dial3 {
 
   /**
    * The state of each node. For a Dial-like solver, `state` will
-   * never be `TRIAL`. The only permissible states are `VALID`,
-   * `FAR`, `BOUNDARY`, and `ADJACENT_TO_BOUNDARY`.
+   * never be `TRIAL`. The only permissible states are `VALID`, `FAR`,
+   * `BOUNDARY`, and `ADJACENT_TO_BOUNDARY`. If `direct == true`, then
+   * `state` values can also be `SHADOW`.
    */
   state_e *state;
 
@@ -619,6 +622,7 @@ bool dial3_step(dial3_s *dial) {
   while (bucket_get_size(bucket) > 0) {
     l0 = bucket_pop(bucket);
     assert(dial->state[l0] != BOUNDARY);
+    assert(dial->state[l0] != SHADOW);
     // NOTE: logically, a node can exist in multiple buckets. Not sure
     // if this will ever actually happen.
     if (dial->state[l0] == VALID) {
@@ -640,6 +644,9 @@ bool dial3_step(dial3_s *dial) {
 
 void dial3_solve(dial3_s *dial) {
   while (dial3_step(dial)) {}
+  if (dial->direct) {
+    // TODO: set the state of the remaining `FAR` nodes to `SHADOW`.
+  }
 }
 
 dbl dial3_get_T(dial3_s const *dial, int l) {
